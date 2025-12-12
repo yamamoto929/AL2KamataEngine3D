@@ -4,7 +4,7 @@ using namespace KamataEngine;
 
 // 初期化
 void GameScene::Initialize() {
-
+	textureHandle_=TextureManager::Load("uvChecker.png");
 };
 
 // 更新処理

@@ -3,6 +3,8 @@
 
 // ゲームシーン
 class GameScene {
+private:
+	uint32_t textureHandle_ = 0;
 
 public:
 	// 初期化
