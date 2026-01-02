@@ -15,6 +15,8 @@ GameScene::~GameScene() {
 		}
 	}
 	worldTransformBlocks_.clear();
+
+	delete debugCamera_;
 }
 
 // 初期化
@@ -51,20 +53,34 @@ void GameScene::Initialize() {
 	// ブロックの生成
 	for (uint32_t i = 0; i < kNumBlockVirtical; ++i) {
 		for (uint32_t j = 0; j < kNumBlockHorizontal; ++j) {
+			if (j % 2 == 0 && i % 2 == 1) {
+				continue;
+			} else if (j % 2 == 1 && i % 2 == 0) {
+				continue;
+			}
 			worldTransformBlocks_[i][j] = new WorldTransform();
 			worldTransformBlocks_[i][j]->Initialize();
 			worldTransformBlocks_[i][j]->translation_.x = kBlockWidth * j;
 			worldTransformBlocks_[i][j]->translation_.y = kBlockHeight * i;
 		}
 	}
+
+	debugCamera_ = new DebugCamera(1280, 720);
 };
 
 // 更新処理
 void GameScene::Update() {
+#ifdef _DEBUG
+	if (Input::GetInstance()->TriggerKey(DIK_SPACE)) {
+		isDebugCameraActive_ = !isDebugCameraActive_;
+	}
+#endif
 	player_->Update();
 	// ブロックの更新
 	for (std::vector<WorldTransform*>& worldTransformBlockLine : worldTransformBlocks_) {
 		for (WorldTransform* worldTransformBlock : worldTransformBlockLine) {
+			if (!worldTransformBlock)
+				continue;
 			/*アフィン変換行列の作成*/
 			Matrix4x4 affineMatrix = MakeAffineMatrix(worldTransformBlock->scale_, worldTransformBlock->rotation_, worldTransformBlock->translation_);
 
@@ -73,21 +89,34 @@ void GameScene::Update() {
 			worldTransformBlock->TransferMatrix();
 		}
 	}
+
+	if (isDebugCameraActive_) {
+		debugCamera_->Update();
+		camera_->matView = debugCamera_->GetCamera().matView;
+		camera_->matProjection = debugCamera_->GetCamera().matProjection;
+		camera_->TransferMatrix();
+	} else {
+		camera_->UpdateMatrix();
+	}
 };
 
 // 描画処理
 void GameScene::Draw() {
+	
 	Model::PreDraw();
 	// model_->Draw(worldTransform_, camera_, textureHandle_);
 	// player_->Draw();
 	// ブロックの描画
 	for (std::vector<WorldTransform*>& worldTransformBlockLine : worldTransformBlocks_) {
 		for (WorldTransform* worldTransformBlock : worldTransformBlockLine) {
+			if (!worldTransformBlock)
+				continue;
 			modelBlock_->Draw(*worldTransformBlock, *camera_);
 		}
 	}
-		
+
 	Model::PostDraw();
+	
 };
 
 // アフィン変換行列を生成
