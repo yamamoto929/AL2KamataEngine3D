@@ -17,6 +17,11 @@ GameScene::~GameScene() {
 	worldTransformBlocks_.clear();
 
 	delete debugCamera_;
+	delete camera_;
+	delete worldTransform_;
+	delete player_;
+	delete skydome_;
+	delete modelSkydome_;
 }
 
 // 初期化
@@ -66,6 +71,11 @@ void GameScene::Initialize() {
 	}
 
 	debugCamera_ = new DebugCamera(1280, 720);
+
+	modelSkydome_ = Model::CreateFromOBJ("skydome", true);
+
+	skydome_ = new Skydome();
+	skydome_->Initialize(camera_, modelSkydome_);
 };
 
 // 更新処理
@@ -76,6 +86,7 @@ void GameScene::Update() {
 	}
 #endif
 	player_->Update();
+	skydome_->Update();
 	// ブロックの更新
 	for (std::vector<WorldTransform*>& worldTransformBlockLine : worldTransformBlocks_) {
 		for (WorldTransform* worldTransformBlock : worldTransformBlockLine) {
@@ -106,6 +117,7 @@ void GameScene::Draw() {
 	Model::PreDraw();
 	// model_->Draw(worldTransform_, camera_, textureHandle_);
 	// player_->Draw();
+	skydome_->Draw();
 	// ブロックの描画
 	for (std::vector<WorldTransform*>& worldTransformBlockLine : worldTransformBlocks_) {
 		for (WorldTransform* worldTransformBlock : worldTransformBlockLine) {
@@ -114,9 +126,8 @@ void GameScene::Draw() {
 			modelBlock_->Draw(*worldTransformBlock, *camera_);
 		}
 	}
-
-	Model::PostDraw();
 	
+	Model::PostDraw();
 };
 
 // アフィン変換行列を生成
