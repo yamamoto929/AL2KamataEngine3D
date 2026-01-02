@@ -9,8 +9,10 @@ GameScene::~GameScene() {
 	delete model_;
 	delete modelBlock_;
 
-	for (WorldTransform* worldTransformBlock : worldTransformBlocks_) {
-		delete worldTransformBlock;
+	for (std::vector<WorldTransform*>& worldTransformBlockLine : worldTransformBlocks_) {
+		for (WorldTransform* worldTransformBlock : worldTransformBlockLine) {
+			delete worldTransformBlock;
+		}
 	}
 	worldTransformBlocks_.clear();
 }
@@ -33,17 +35,27 @@ void GameScene::Initialize() {
 	player_->Initialize(model_, textureHandle_, camera_);
 
 	// 要素数
+	const uint32_t kNumBlockVirtical = 10;
 	const uint32_t kNumBlockHorizontal = 20;
 	// ブロック1個分の横幅
 	const float kBlockWidth = 2.0f;
+	const float kBlockHeight = 2.0f;
 	// 要素数を変更する
-	worldTransformBlocks_.resize(kNumBlockHorizontal);
-	// キューブの生成
-	for (uint32_t i = 0; i < kNumBlockHorizontal; ++i) {
-		worldTransformBlocks_[i] = new KamataEngine::WorldTransform();
-		worldTransformBlocks_[i]->Initialize();
-		worldTransformBlocks_[i]->translation_.x = kBlockWidth * i;
-		worldTransformBlocks_[i]->translation_.y = 0.0f;
+	// 列数を設定 (縦方向のブロック数)
+	worldTransformBlocks_.resize(kNumBlockVirtical);
+	for (uint32_t i = 0; i < kNumBlockVirtical; ++i) {
+		// 1列の要素数を設定 (横方向のブロック数)
+		worldTransformBlocks_[i].resize(kNumBlockHorizontal);
+	}
+
+	// ブロックの生成
+	for (uint32_t i = 0; i < kNumBlockVirtical; ++i) {
+		for (uint32_t j = 0; j < kNumBlockHorizontal; ++j) {
+			worldTransformBlocks_[i][j] = new WorldTransform();
+			worldTransformBlocks_[i][j]->Initialize();
+			worldTransformBlocks_[i][j]->translation_.x = kBlockWidth * j;
+			worldTransformBlocks_[i][j]->translation_.y = kBlockHeight * i;
+		}
 	}
 };
 
@@ -51,13 +63,15 @@ void GameScene::Initialize() {
 void GameScene::Update() {
 	player_->Update();
 	// ブロックの更新
-	for (WorldTransform* worldTransformBlock : worldTransformBlocks_) {
-		/*アフィン変換行列の作成*/
-		Matrix4x4 affineMatrix = MakeAffineMatrix(worldTransformBlock->scale_,worldTransformBlock->rotation_,worldTransformBlock->translation_);
+	for (std::vector<WorldTransform*>& worldTransformBlockLine : worldTransformBlocks_) {
+		for (WorldTransform* worldTransformBlock : worldTransformBlockLine) {
+			/*アフィン変換行列の作成*/
+			Matrix4x4 affineMatrix = MakeAffineMatrix(worldTransformBlock->scale_, worldTransformBlock->rotation_, worldTransformBlock->translation_);
 
-		worldTransformBlock->matWorld_ = affineMatrix;
-		// 定数バッファに転送する
-		worldTransformBlock->TransferMatrix();
+			worldTransformBlock->matWorld_ = affineMatrix;
+			// 定数バッファに転送する
+			worldTransformBlock->TransferMatrix();
+		}
 	}
 };
 
@@ -67,29 +81,38 @@ void GameScene::Draw() {
 	// model_->Draw(worldTransform_, camera_, textureHandle_);
 	// player_->Draw();
 	// ブロックの描画
-	for (WorldTransform* worldTransformBlock : worldTransformBlocks_) {
-		modelBlock_->Draw(*worldTransformBlock, *camera_);
+	for (std::vector<WorldTransform*>& worldTransformBlockLine : worldTransformBlocks_) {
+		for (WorldTransform* worldTransformBlock : worldTransformBlockLine) {
+			modelBlock_->Draw(*worldTransformBlock, *camera_);
+		}
 	}
+		
 	Model::PostDraw();
 };
 
 // アフィン変換行列を生成
 Matrix4x4 MakeAffineMatrix(const Vector3& scale, const Vector3& rotate, const Vector3& translate) {
 	Matrix4x4 result = {};
-	// 回転行列の計算 
+	// 回転行列の計算
 	float sx = sinf(rotate.x), cx = cosf(rotate.x);
 	float sy = sinf(rotate.y), cy = cosf(rotate.y);
 	float sz = sinf(rotate.z), cz = cosf(rotate.z);
 
 	// 回転行列
 	Matrix4x4 matRot = {};
-	matRot.m[0][0] = cy * cz;                matRot.m[0][1] = cy * sz;                matRot.m[0][2] = -sy;
+	matRot.m[0][0] = cy * cz;
+	matRot.m[0][1] = cy * sz;
+	matRot.m[0][2] = -sy;
 
-	matRot.m[1][0] = sx * sy * cz - cx * sz; matRot.m[1][1] = sx * sy * sz + cx * cz; matRot.m[1][2] = sx * cy;
+	matRot.m[1][0] = sx * sy * cz - cx * sz;
+	matRot.m[1][1] = sx * sy * sz + cx * cz;
+	matRot.m[1][2] = sx * cy;
 
-	matRot.m[2][0] = cx * sy * cz + sx * sz; matRot.m[2][1] = cx * sy * sz - sx * cz; matRot.m[2][2] = cx * cy;
+	matRot.m[2][0] = cx * sy * cz + sx * sz;
+	matRot.m[2][1] = cx * sy * sz - sx * cz;
+	matRot.m[2][2] = cx * cy;
 
-	                                                                                                            matRot.m[3][3] = 1.0f;
+	matRot.m[3][3] = 1.0f;
 
 	// スケールを回転行列に適用
 	for (int i = 0; i < 3; ++i) {

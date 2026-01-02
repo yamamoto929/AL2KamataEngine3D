@@ -16,7 +16,7 @@ private:
 
 	Player* player_ = nullptr;
 
-	std::vector<KamataEngine::WorldTransform*> worldTransformBlocks_;
+	std::vector<std::vector<KamataEngine::WorldTransform*>> worldTransformBlocks_;
 
 public:
 	~GameScene();
