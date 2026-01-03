@@ -32,14 +32,11 @@ void GameScene::Initialize() {
 	modelPlayer_ = Model::CreateFromOBJ("player", true);
 	modelBlock_ = Model::CreateFromOBJ("box",true);
 
-	worldTransform_ = new KamataEngine::WorldTransform();
+	worldTransform_ = new WorldTransform();
 	worldTransform_->Initialize();
 
-	camera_ = new KamataEngine::Camera();
+	camera_ = new Camera();
 	camera_->Initialize();
-
-	player_ = new Player();
-	player_->Initialize(modelPlayer_, camera_);
 
 	debugCamera_ = new DebugCamera(1280, 720);
 
@@ -52,6 +49,11 @@ void GameScene::Initialize() {
 	mapChipField_->LoadMapChipCsv("Resources/blocks.csv");
 
 	GenerateBlocks();
+
+	Vector3 playerPosition = mapChipField_->GetMapChipPositionByIndex(1, 19);
+
+	player_ = new Player();
+	player_->Initialize(modelPlayer_, camera_, playerPosition);
 };
 
 // 更新処理

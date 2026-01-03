@@ -15,8 +15,8 @@ struct MapChipData {
 /// </summary>
 class MapChipField {
 private:
-	static inline const float kBlockWidth = 2.0f;
-	static inline const float kBlockHeight = 2.0f;
+	static inline const float kBlockWidth = 1.0f;
+	static inline const float kBlockHeight = 1.0f;
 
 	static inline const uint32_t kBlockVirtical = 20; // 縦
 	static inline const uint32_t kBlockHorizontal = 100; // 横
