@@ -1,11 +1,11 @@
 #include "GameScene.h"
-#include <vector>
 #include "WorldMatrixUpdate.h"
+#include <vector>
 
 using namespace KamataEngine;
 
 GameScene::~GameScene() {
-	delete model_;
+	delete modelPlayer_;
 	delete modelBlock_;
 
 	for (std::vector<WorldTransform*>& worldTransformBlockLine : worldTransformBlocks_) {
@@ -28,8 +28,8 @@ void GameScene::Initialize() {
 	textureHandle_ = TextureManager::Load("uvChecker.png");
 	textureHandleBlock_ = TextureManager::Load("uvChecker.png");
 
-	model_ = Model::Create();
-	modelBlock_ = Model::Create();
+	modelPlayer_ = Model::CreateFromOBJ("player", true);
+	modelBlock_ = Model::CreateFromOBJ("box",true);
 
 	worldTransform_ = new KamataEngine::WorldTransform();
 	worldTransform_->Initialize();
@@ -38,7 +38,7 @@ void GameScene::Initialize() {
 	camera_->Initialize();
 
 	player_ = new Player();
-	player_->Initialize(model_, textureHandle_, camera_);
+	player_->Initialize(modelPlayer_, camera_);
 
 	// 要素数
 	const uint32_t kNumBlockVirtical = 10;
@@ -108,10 +108,10 @@ void GameScene::Update() {
 
 // 描画処理
 void GameScene::Draw() {
-	
+
 	Model::PreDraw();
 	// model_->Draw(worldTransform_, camera_, textureHandle_);
-	// player_->Draw();
+	player_->Draw();
 	skydome_->Draw();
 	// ブロックの描画
 	for (std::vector<WorldTransform*>& worldTransformBlockLine : worldTransformBlocks_) {
@@ -121,7 +121,6 @@ void GameScene::Draw() {
 			modelBlock_->Draw(*worldTransformBlock, *camera_);
 		}
 	}
-	
+
 	Model::PostDraw();
 };
-

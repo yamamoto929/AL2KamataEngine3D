@@ -9,7 +9,7 @@ private:
 	uint32_t textureHandle_ = 0;
 	uint32_t textureHandleBlock_ = 0;
 
-	KamataEngine::Model* model_ = nullptr;
+	KamataEngine::Model* modelPlayer_ = nullptr;
 	KamataEngine::Model* modelBlock_ = nullptr;
 
 	KamataEngine::WorldTransform* worldTransform_;

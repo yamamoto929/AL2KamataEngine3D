@@ -14,7 +14,7 @@ public:
 	/// </summary>
 	/// <param name="model">モデル</param>
 	/// <param name="textureHandle"> テクスチャハンドル</param>
-	void Initialize(KamataEngine::Model* model, uint32_t textureHandle,KamataEngine::Camera* camera);
+	void Initialize(KamataEngine::Model* model,KamataEngine::Camera* camera);
 
 	/// <summary>
 	/// 更新
