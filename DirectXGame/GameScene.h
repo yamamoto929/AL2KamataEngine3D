@@ -3,6 +3,7 @@
 #include "MapChipField.h"
 #include "Player.h"
 #include "Skydome.h"
+#include "CameraController.h"
 
 // ゲームシーン
 class GameScene {
@@ -28,6 +29,8 @@ private:
 	KamataEngine::Model* modelSkydome_ = nullptr;
 
 	MapChipField* mapChipField_ = nullptr;
+
+	CameraController* cameraController_ = nullptr;
 
 public:
 	~GameScene();

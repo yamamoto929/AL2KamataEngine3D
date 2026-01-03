@@ -22,6 +22,7 @@ GameScene::~GameScene() {
 	delete skydome_;
 	delete modelSkydome_;
 	delete mapChipField_;
+	delete cameraController_;
 }
 
 // 初期化
@@ -54,6 +55,13 @@ void GameScene::Initialize() {
 
 	player_ = new Player();
 	player_->Initialize(modelPlayer_, camera_, playerPosition);
+
+	cameraController_ = new CameraController();
+	cameraController_->Initialize(camera_);
+	cameraController_->SetTarget(player_);
+	CameraController::Rect movableArea = {11.0f, 88.0f, 6.0f, 20.0f};
+	cameraController_->SetMovableArea(movableArea);
+	cameraController_->Reset();
 };
 
 // 更新処理
@@ -83,6 +91,8 @@ void GameScene::Update() {
 	} else {
 		camera_->UpdateMatrix();
 	}
+
+	cameraController_->Update();
 };
 
 // 描画処理
