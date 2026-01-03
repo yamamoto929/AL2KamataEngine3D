@@ -103,13 +103,6 @@ void GameScene::Draw() {
 	debugCamera_->Update();
 
 	Model::PreDraw();
-
-	model_->Draw(worldTransform_, debugCamera_->GetCamera(), textureHandle_);
-
-	// 3Dモデル描画後処理
-	Model::PostDraw();
-
-	Model::PreDraw();
 	// model_->Draw(worldTransform_, camera_, textureHandle_);
 	player_->Draw();
 	skydome_->Draw();
