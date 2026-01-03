@@ -1,5 +1,7 @@
 #include "Player.h"
 #include <cassert>
+#include "AffineMatrix.h"
+
 
 using namespace KamataEngine;
 
@@ -12,6 +14,8 @@ void Player::Initialize(KamataEngine::Model* model, uint32_t textureHandle, Kama
 }
 
 void Player::Update() { 
+	Matrix4x4 affineMatrix = MakeAffineMatrix(worldTransform_.scale_, worldTransform_.rotation_, worldTransform_.translation_);
+	worldTransform_.matWorld_ = affineMatrix;
 	worldTransform_.TransferMatrix();
 }
 
