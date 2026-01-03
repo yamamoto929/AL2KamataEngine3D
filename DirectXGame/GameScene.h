@@ -1,31 +1,39 @@
 #pragma once
 #include "KamataEngine.h"
+#include "MapChipField.h"
+#include "Player.h"
+#include "Skydome.h"
+#include "CameraController.h"
 
 // ゲームシーン
 class GameScene {
 private:
-	// KamataEngine::Sprite* sprite_ = nullptr;
-	KamataEngine::Model* model_ = nullptr;
-
 	uint32_t textureHandle_ = 0;
+	uint32_t textureHandleBlock_ = 0;
 
-	uint32_t soundDataHandle_ = 0;
+	KamataEngine::Model* modelPlayer_ = nullptr;
+	KamataEngine::Model* modelBlock_ = nullptr;
 
-	// ワールドトランスフォーム
-	KamataEngine::WorldTransform worldTransform_;
+	KamataEngine::WorldTransform* worldTransform_;
+	KamataEngine::Camera* camera_;
 
-	// カメラ
-	KamataEngine::Camera camera_;
+	Player* player_ = nullptr;
 
-	uint32_t voiceHandle_ = 0;
+	std::vector<std::vector<KamataEngine::WorldTransform*>> worldTransformBlocks_;
 
-	uint32_t playHandle_ = 0;
-
+	bool isDebugCameraActive_ = false;
 	KamataEngine::DebugCamera* debugCamera_ = nullptr;
+
+	Skydome* skydome_ = nullptr;
+
+	KamataEngine::Model* modelSkydome_ = nullptr;
+
+	MapChipField* mapChipField_ = nullptr;
+
+	CameraController* cameraController_ = nullptr;
 
 public:
 	~GameScene();
-
 	// 初期化
 	void Initialize();
 
@@ -34,4 +42,6 @@ public:
 
 	// 描画処理
 	void Draw();
+
+	void GenerateBlocks();
 };

@@ -12,6 +12,9 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	// ImGuiManagerインスタンスの取得
 	ImGuiManager* imguiManager = ImGuiManager::GetInstance();
 
+	// エンジンの初期化
+	KamataEngine::Initialize();
+
 	// ゲームシーンのインスタンス作成
 	GameScene* gameScene = new GameScene();
 
