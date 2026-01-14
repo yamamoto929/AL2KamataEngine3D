@@ -56,6 +56,8 @@ void GameScene::Initialize() {
 	player_ = new Player();
 	player_->Initialize(modelPlayer_, camera_, playerPosition);
 
+	player_->SetMapChipField(mapChipField_);
+
 	cameraController_ = new CameraController();
 	cameraController_->Initialize(camera_);
 	cameraController_->SetTarget(player_);

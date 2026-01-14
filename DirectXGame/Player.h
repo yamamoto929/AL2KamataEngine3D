@@ -1,7 +1,25 @@
 #pragma once
 #include "KamataEngine.h"
+#include "MapChipField.h"
 
+class MapChipField;
 class Player {
+public:
+	struct CollisionMapInfo {
+		bool isCollideCeiling = false;
+		bool isLanding = false;
+		bool isTouchingWall = false;
+		KamataEngine::Vector3 velocity = KamataEngine::Vector3{0.0f, 0.0f, 0.0f};
+	};
+
+	enum Corner {
+		kRIGHTBOTTOM,
+		kLEFTBOTTOM,
+		kRIGHTTOP,
+		kLEFTTOP,
+		kNUMCORNER
+	};
+
 private:
 	uint32_t textureHandle_ = 0;
 	KamataEngine::Model* model_ = nullptr;
@@ -18,7 +36,7 @@ private:
 	enum class LRDirection {
 		kRight,
 		kLeft,
-	}; 
+	};
 
 	LRDirection lrDirection_ = LRDirection::kRight;
 
@@ -29,12 +47,18 @@ private:
 
 	bool onGround_ = true;
 
+	MapChipField* mapChipField_ = nullptr;
+
 	// 重力加速度(下方向)
 	static inline const float kGravityAcceleration = 0.02f;
 	// 最大落下速度(下方向)
 	static inline const float kLimitFallSpeed = -0.4f;
-	// ジャンプ初速(上方向) 
+	// ジャンプ初速(上方向)
 	static inline const float kJumpAcceleration = 0.5f;
+
+	static inline const float kWidth = 0.8f;
+	static inline const float kHeight = 0.8f;
+	static inline const float kBlank = 0.01f;
 
 public:
 	/// <summary>
@@ -58,4 +82,21 @@ public:
 	const KamataEngine::WorldTransform& GetWorldTransform() const { return worldTransform_; }
 
 	const KamataEngine::Vector3& GetVelocity() const { return velocity_; }
+
+	void SetMapChipField(MapChipField* mapChipField) { mapChipField_ = mapChipField; }
+
+	void Move();
+
+	void CheckMapCollidion(CollisionMapInfo& info);
+
+	void CheckMapCollidionTop(CollisionMapInfo& info);
+	void CheckMapCollidionBottom(CollisionMapInfo& info);
+	void CheckMapCollidionLeft(CollisionMapInfo& info);
+	void CheckMapCollidionRight(CollisionMapInfo& info);
+
+	KamataEngine::Vector3 CornerPosition(const KamataEngine::Vector3& center, Corner corner);
+
+	void MoveByResult(const CollisionMapInfo& info);
+
+	void OnContactCeiling(const CollisionMapInfo& info);
 };
