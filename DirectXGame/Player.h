@@ -62,7 +62,7 @@ private:
 
 	static inline const float kAttenuationLanding = 0.5f;
 	static inline const float kAttenuationWall = 0.5f;
-	static inline const float kGroundSnapOffset = 0.01f;
+	static inline const float kGroundSnapOffset = 0.011f;
 
 public:
 	/// <summary>
