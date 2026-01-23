@@ -60,6 +60,10 @@ private:
 	static inline const float kHeight = 0.8f;
 	static inline const float kBlank = 0.01f;
 
+	static inline const float kAttenuationLanding = 0.5f;
+	static inline const float kAttenuationWall = 0.5f;
+	static inline const float kGroundSnapOffset = 0.01f;
+
 public:
 	/// <summary>
 	/// 初期化
@@ -99,4 +103,8 @@ public:
 	void MoveByResult(const CollisionMapInfo& info);
 
 	void OnContactCeiling(const CollisionMapInfo& info);
+
+	void GroundedStatusHandling(const CollisionMapInfo& info);
+
+	void OnContactWall(const CollisionMapInfo& info);
 };
