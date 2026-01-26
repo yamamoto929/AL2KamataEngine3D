@@ -55,7 +55,7 @@ void Player::Update() {
 	WorldMatrixUpdate(worldTransform_);
 }
 
-void Player::Draw() { model_->Draw(worldTransform_, *camera_, textureHandle_); }
+void Player::Draw() { model_->Draw(worldTransform_, *camera_); }
 
 void Player::Move() {
 	if (onGround_) {
