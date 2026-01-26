@@ -2,6 +2,7 @@
 #include "KamataEngine.h"
 #include "MapChipField.h"
 #include "Player.h"
+#include "Enemy.h"
 #include "Skydome.h"
 #include "CameraController.h"
 
@@ -31,6 +32,9 @@ private:
 	MapChipField* mapChipField_ = nullptr;
 
 	CameraController* cameraController_ = nullptr;
+
+	Enemy* enemy_ = nullptr;
+	KamataEngine::Model* modelEnemy_ = nullptr;
 
 public:
 	~GameScene();

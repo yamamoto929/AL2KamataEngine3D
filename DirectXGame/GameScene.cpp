@@ -23,6 +23,7 @@ GameScene::~GameScene() {
 	delete modelSkydome_;
 	delete mapChipField_;
 	delete cameraController_;
+	delete enemy_;
 }
 
 // 初期化
@@ -31,7 +32,8 @@ void GameScene::Initialize() {
 	textureHandleBlock_ = TextureManager::Load("uvChecker.png");
 
 	modelPlayer_ = Model::CreateFromOBJ("player", true);
-	modelBlock_ = Model::CreateFromOBJ("box",true);
+	modelBlock_ = Model::CreateFromOBJ("box", true);
+	modelEnemy_ = Model::CreateFromOBJ("enemy", true);
 
 	worldTransform_ = new WorldTransform();
 	worldTransform_->Initialize();
@@ -58,6 +60,11 @@ void GameScene::Initialize() {
 
 	player_->SetMapChipField(mapChipField_);
 
+	Vector3 enemyPosition = mapChipField_->GetMapChipPositionByIndex(3, 19);
+
+	enemy_ = new Enemy();
+	enemy_->Initialize(modelEnemy_, camera_, Vector3{10.0f, 1.0f, 0.0f});
+
 	cameraController_ = new CameraController();
 	cameraController_->Initialize(camera_);
 	cameraController_->SetTarget(player_);
@@ -75,6 +82,10 @@ void GameScene::Update() {
 #endif
 	player_->Update();
 	skydome_->Update();
+
+	if (enemy_ != nullptr) {
+		enemy_->Update();
+	}
 	// ブロックの更新
 	for (std::vector<WorldTransform*>& worldTransformBlockLine : worldTransformBlocks_) {
 		for (WorldTransform* worldTransformBlock : worldTransformBlockLine) {
@@ -108,6 +119,10 @@ void GameScene::Draw() {
 	// model_->Draw(worldTransform_, camera_, textureHandle_);
 	player_->Draw();
 	skydome_->Draw();
+
+	if (enemy_ != nullptr) {
+		enemy_->Draw();
+	}
 	// ブロックの描画
 	for (std::vector<WorldTransform*>& worldTransformBlockLine : worldTransformBlocks_) {
 		for (WorldTransform* worldTransformBlock : worldTransformBlockLine) {
