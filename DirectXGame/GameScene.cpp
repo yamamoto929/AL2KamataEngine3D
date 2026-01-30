@@ -1,5 +1,6 @@
 #include "GameScene.h"
 #include "WorldMatrixUpdate.h"
+#include "imgui.h"
 #include <vector>
 
 using namespace KamataEngine;
@@ -23,9 +24,10 @@ GameScene::~GameScene() {
 	delete modelSkydome_;
 	delete mapChipField_;
 	delete cameraController_;
-	delete enemy_;
+	for (Enemy* enemy : enemies_) {
+		delete enemy;
+	}
 }
-
 // 初期化
 void GameScene::Initialize() {
 	textureHandle_ = TextureManager::Load("uvChecker.png");
@@ -53,17 +55,25 @@ void GameScene::Initialize() {
 
 	GenerateBlocks();
 
-	Vector3 playerPosition = mapChipField_->GetMapChipPositionByIndex(1, 19);
+	Vector3 playerPosition = mapChipField_->GetMapChipPositionByIndex(1, 18);
 
 	player_ = new Player();
 	player_->Initialize(modelPlayer_, camera_, playerPosition);
 
 	player_->SetMapChipField(mapChipField_);
 
-	Vector3 enemyPosition = mapChipField_->GetMapChipPositionByIndex(3, 19);
+	// for (Enemy* enemy : enemies_) {
+	// enemy = new Enemy();
+	// enemy->Initialize(modelEnemy_, camera_, Vector3{10.0f, 1.0f, 0.0f});
+	//}
 
-	enemy_ = new Enemy();
-	enemy_->Initialize(modelEnemy_, camera_, Vector3{10.0f, 1.0f, 0.0f});
+	for (size_t i = 0; i < kEnemyMax; ++i) {
+		Enemy* newEnemy = new Enemy();
+		uint32_t enemyPositionXIndex = static_cast<uint32_t>(i) + 20;
+		Vector3 enemyPosition = mapChipField_->GetMapChipPositionByIndex(enemyPositionXIndex, 18);
+		newEnemy->Initialize(modelEnemy_, camera_, enemyPosition);
+		enemies_.push_back(newEnemy);
+	}
 
 	cameraController_ = new CameraController();
 	cameraController_->Initialize(camera_);
@@ -83,8 +93,8 @@ void GameScene::Update() {
 	player_->Update();
 	skydome_->Update();
 
-	if (enemy_ != nullptr) {
-		enemy_->Update();
+	for (Enemy* enemy : enemies_) {
+		enemy->Update();
 	}
 	// ブロックの更新
 	for (std::vector<WorldTransform*>& worldTransformBlockLine : worldTransformBlocks_) {
@@ -106,6 +116,8 @@ void GameScene::Update() {
 	}
 
 	cameraController_->Update();
+
+	CheckAllCollisions();
 };
 
 // 描画処理
@@ -120,9 +132,10 @@ void GameScene::Draw() {
 	player_->Draw();
 	skydome_->Draw();
 
-	if (enemy_ != nullptr) {
-		enemy_->Draw();
+	for (Enemy* enemy : enemies_) {
+		enemy->Draw();
 	}
+
 	// ブロックの描画
 	for (std::vector<WorldTransform*>& worldTransformBlockLine : worldTransformBlocks_) {
 		for (WorldTransform* worldTransformBlock : worldTransformBlockLine) {
@@ -186,4 +199,25 @@ void GameScene::GenerateBlocks() {
 			}
 		}
 	}
+}
+
+void GameScene::CheckAllCollisions() {
+#pragma region checkPlayer-EnemyCollision
+	{
+		AABB aabb1, aabb2;
+
+		aabb1 = player_->GetAABB();
+
+		for (Enemy* enemy : enemies_) {
+
+			aabb2 = enemy->GetAABB();
+
+			if (CheckAABBCollision(aabb1, aabb2)) {
+				player_->OnCollision(enemy);
+				enemy->OnCollision(player_);
+			}
+		}
+	}
+#pragma endregion
+
 }

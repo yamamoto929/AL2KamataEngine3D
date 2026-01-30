@@ -33,7 +33,8 @@ private:
 
 	CameraController* cameraController_ = nullptr;
 
-	Enemy* enemy_ = nullptr;
+	const uint32_t kEnemyMax = 1; 
+	std::list<Enemy*> enemies_;
 	KamataEngine::Model* modelEnemy_ = nullptr;
 
 public:
@@ -48,4 +49,6 @@ public:
 	void Draw();
 
 	void GenerateBlocks();
+
+	void CheckAllCollisions();
 };
