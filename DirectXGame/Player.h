@@ -1,8 +1,10 @@
 #pragma once
 #include "KamataEngine.h"
 #include "MapChipField.h"
+#include "AABB.h"
 
 class MapChipField;
+class Enemy;
 class Player {
 public:
 	struct CollisionMapInfo {
@@ -87,6 +89,8 @@ public:
 
 	const KamataEngine::Vector3& GetVelocity() const { return velocity_; }
 
+	KamataEngine::Vector3 GetWorldPosition();
+
 	void SetMapChipField(MapChipField* mapChipField) { mapChipField_ = mapChipField; }
 
 	void Move();
@@ -107,4 +111,8 @@ public:
 	void GroundedStatusHandling(const CollisionMapInfo& info);
 
 	void OnContactWall(const CollisionMapInfo& info);
+
+	AABB GetAABB();
+
+	void OnCollision(const Enemy* enemy);
 };
