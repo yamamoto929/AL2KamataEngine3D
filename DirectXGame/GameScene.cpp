@@ -27,6 +27,7 @@ GameScene::~GameScene() {
 	for (Enemy* enemy : enemies_) {
 		delete enemy;
 	}
+	delete deathParticles_;
 }
 // 初期化
 void GameScene::Initialize() {
@@ -36,6 +37,7 @@ void GameScene::Initialize() {
 	modelPlayer_ = Model::CreateFromOBJ("player", true);
 	modelBlock_ = Model::CreateFromOBJ("box", true);
 	modelEnemy_ = Model::CreateFromOBJ("enemy", true);
+	modelDeathParticles_ = Model::CreateFromOBJ("deathParticle", true);
 
 	worldTransform_ = new WorldTransform();
 	worldTransform_->Initialize();
@@ -55,12 +57,15 @@ void GameScene::Initialize() {
 
 	GenerateBlocks();
 
-	Vector3 playerPosition = mapChipField_->GetMapChipPositionByIndex(1, 18);
+	Vector3 playerPosition = mapChipField_->GetMapChipPositionByIndex(5, 14);
 
 	player_ = new Player();
 	player_->Initialize(modelPlayer_, camera_, playerPosition);
 
 	player_->SetMapChipField(mapChipField_);
+
+	deathParticles_ = new DeathParticles();
+	deathParticles_->Initialize(modelDeathParticles_, camera_, playerPosition);
 
 	// for (Enemy* enemy : enemies_) {
 	// enemy = new Enemy();
@@ -81,6 +86,8 @@ void GameScene::Initialize() {
 	CameraController::Rect movableArea = {11.0f, 88.0f, 6.0f, 20.0f};
 	cameraController_->SetMovableArea(movableArea);
 	cameraController_->Reset();
+	
+	
 };
 
 // 更新処理
@@ -104,6 +111,10 @@ void GameScene::Update() {
 
 			WorldMatrixUpdate(*worldTransformBlock);
 		}
+	}
+
+	if (deathParticles_ != nullptr) {
+		deathParticles_->Update();
 	}
 
 	if (isDebugCameraActive_) {
@@ -139,6 +150,10 @@ void GameScene::Draw() {
 				continue;
 			modelBlock_->Draw(*worldTransformBlock, *camera_);
 		}
+	}
+
+	if (deathParticles_ != nullptr) {
+		deathParticles_->Draw();
 	}
 
 	Model::PostDraw();

@@ -157,10 +157,12 @@
     <ClCompile Include="AABB.cpp" />
     <ClCompile Include="AffineMatrix.cpp" />
     <ClCompile Include="CameraController.cpp" />
+    <ClCompile Include="DeathParticles.cpp" />
     <ClCompile Include="Enemy.cpp" />
     <ClCompile Include="GameScene.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MapChipField.cpp" />
+    <ClCompile Include="Matrix4x4Calc.cpp" />
     <ClCompile Include="Player.cpp" />
     <ClCompile Include="Skydome.cpp" />
     <ClCompile Include="Vector3Operator.cpp" />
@@ -267,9 +269,11 @@
     <ClInclude Include="AABB.h" />
     <ClInclude Include="AffineMatrix.h" />
     <ClInclude Include="CameraController.h" />
+    <ClInclude Include="DeathParticles.h" />
     <ClInclude Include="Enemy.h" />
     <ClInclude Include="GameScene.h" />
     <ClInclude Include="MapChipField.h" />
+    <ClInclude Include="Matrix4x4Calc.h" />
     <ClInclude Include="Player.h" />
     <ClInclude Include="Skydome.h" />
     <ClInclude Include="Vector3Operator.h" />
