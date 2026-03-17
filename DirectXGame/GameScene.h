@@ -1,10 +1,11 @@
-#pragma once
+﻿#pragma once
 #include "KamataEngine.h"
 #include "MapChipField.h"
 #include "Player.h"
 #include "Enemy.h"
 #include "Skydome.h"
 #include "CameraController.h"
+#include "DeathParticles.h"
 
 // ゲームシーン
 class GameScene {
@@ -36,6 +37,9 @@ private:
 	const uint32_t kEnemyMax = 1; 
 	std::list<Enemy*> enemies_;
 	KamataEngine::Model* modelEnemy_ = nullptr;
+
+	DeathParticles* deathParticles_ = nullptr;
+	KamataEngine::Model* modelDeathParticles_ = nullptr;
 
 public:
 	~GameScene();
