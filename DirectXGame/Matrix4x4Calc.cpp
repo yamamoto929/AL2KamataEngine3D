@@ -19,7 +19,7 @@ Matrix4x4 MakeRotateZMatrix(float radian) {
 	result.m[0][0] = cosf(radian);
 	result.m[0][1] = sinf(radian);
 	result.m[1][0] = -sinf(radian);
-	result.m[1][0] = cosf(radian);
+	result.m[1][1] = cosf(radian);
 	result.m[2][2] = 1.0f;
 	result.m[3][3] = 1.0f;
 	return result;
