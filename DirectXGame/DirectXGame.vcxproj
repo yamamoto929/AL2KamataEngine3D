@@ -165,6 +165,7 @@
     <ClCompile Include="Matrix4x4Calc.cpp" />
     <ClCompile Include="Player.cpp" />
     <ClCompile Include="Skydome.cpp" />
+    <ClCompile Include="TitleScene.cpp" />
     <ClCompile Include="Vector3Operator.cpp" />
     <ClCompile Include="WorldMatrixUpdate.cpp" />
   </ItemGroup>
@@ -276,6 +277,7 @@
     <ClInclude Include="Matrix4x4Calc.h" />
     <ClInclude Include="Player.h" />
     <ClInclude Include="Skydome.h" />
+    <ClInclude Include="TitleScene.h" />
     <ClInclude Include="Vector3Operator.h" />
     <ClInclude Include="WorldMatrixUpdate.h" />
   </ItemGroup>

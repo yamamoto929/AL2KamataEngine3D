@@ -51,11 +51,18 @@ void Player::Update() {
 		// 自キャラの角度を設定する
 		worldTransform_.rotation_.y = turnFirstRotationY_ + (destinationRotationY - turnFirstRotationY_) * easedT;
 	}
-
+	
 	WorldMatrixUpdate(worldTransform_);
+
+	
 }
 
-void Player::Draw() { model_->Draw(worldTransform_, *camera_); }
+void Player::Draw() { 
+	if (isDead_) {
+		return;
+	}
+	model_->Draw(worldTransform_, *camera_); 
+}
 
 void Player::Move() {
 	if (onGround_) {
@@ -383,5 +390,5 @@ AABB Player::GetAABB() {
 
 void Player::OnCollision(const Enemy* enemy) {
 	(void)enemy;
-	velocity_ = Vector3(0.0f, 2.0f, 0.0f);
+	isDead_ = true;
 };

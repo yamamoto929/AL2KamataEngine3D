@@ -66,6 +66,9 @@ private:
 	static inline const float kAttenuationWall = 0.5f;
 	static inline const float kGroundSnapOffset = 0.011f;
 
+	// デスフラグ
+	bool isDead_ = false;
+
 public:
 	/// <summary>
 	/// 初期化
@@ -115,4 +118,6 @@ public:
 	AABB GetAABB();
 
 	void OnCollision(const Enemy* enemy);
+
+	bool IsDead() const { return isDead_; }
 };

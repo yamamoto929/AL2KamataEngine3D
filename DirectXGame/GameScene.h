@@ -41,6 +41,13 @@ private:
 	DeathParticles* deathParticles_ = nullptr;
 	KamataEngine::Model* modelDeathParticles_ = nullptr;
 
+	enum class Phase {
+		kPlay,
+		kDead
+	};
+
+	Phase phase_;
+
 public:
 	~GameScene();
 	// 初期化
@@ -55,4 +62,6 @@ public:
 	void GenerateBlocks();
 
 	void CheckAllCollisions();
+
+	void ChangePhase();
 };

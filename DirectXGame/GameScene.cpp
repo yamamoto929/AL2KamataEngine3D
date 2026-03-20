@@ -2,7 +2,6 @@
 #include "WorldMatrixUpdate.h"
 #include "imgui.h"
 #include <vector>
-
 using namespace KamataEngine;
 
 GameScene::~GameScene() {
@@ -86,49 +85,97 @@ void GameScene::Initialize() {
 	CameraController::Rect movableArea = {11.0f, 88.0f, 6.0f, 20.0f};
 	cameraController_->SetMovableArea(movableArea);
 	cameraController_->Reset();
-	
-	
+
+	phase_ = Phase::kPlay;
 };
 
 // 更新処理
 void GameScene::Update() {
-#ifdef _DEBUG
-	if (Input::GetInstance()->TriggerKey(DIK_SPACE)) {
-		isDebugCameraActive_ = !isDebugCameraActive_;
-	}
-#endif
-	player_->Update();
-	skydome_->Update();
+	switch (phase_) {
+	case Phase::kPlay:
+		// #ifdef _DEBUG
+		//		if (Input::GetInstance()->TriggerKey(DIK_SPACE)) {
+		//			isDebugCameraActive_ = !isDebugCameraActive_;
+		//		}
+		// #endif
+		
+		//  天球
+		skydome_->Update();
 
-	for (Enemy* enemy : enemies_) {
-		enemy->Update();
-	}
-	// ブロックの更新
-	for (std::vector<WorldTransform*>& worldTransformBlockLine : worldTransformBlocks_) {
-		for (WorldTransform* worldTransformBlock : worldTransformBlockLine) {
-			if (!worldTransformBlock)
-				continue;
+		// プレイヤー
+		player_->Update();
 
-			WorldMatrixUpdate(*worldTransformBlock);
+		// 敵(複数)
+		for (Enemy* enemy : enemies_) {
+			enemy->Update();
 		}
+
+		// カメラコントローラー
+		cameraController_->Update();
+
+		// カメラ
+		if (isDebugCameraActive_) {
+			debugCamera_->Update();
+			camera_->matView = debugCamera_->GetCamera().matView;
+			camera_->matProjection = debugCamera_->GetCamera().matProjection;
+			camera_->TransferMatrix();
+		} else {
+			camera_->UpdateMatrix();
+		}
+
+		// ブロック
+		for (std::vector<WorldTransform*>& worldTransformBlockLine : worldTransformBlocks_) {
+			for (WorldTransform* worldTransformBlock : worldTransformBlockLine) {
+				if (!worldTransformBlock)
+					continue;
+
+				WorldMatrixUpdate(*worldTransformBlock);
+			}
+		}
+
+		// すべての当たり判定
+		CheckAllCollisions();
+		break;
+
+	case Phase::kDead:
+		// 天球
+		skydome_->Update();
+
+		// 敵(複数)
+		for (Enemy* enemy : enemies_) {
+			enemy->Update();
+		}
+
+		// 死亡時のパーティクル
+		if (deathParticles_ != nullptr) {
+			deathParticles_->Update();
+		}
+
+		// カメラ
+		if (isDebugCameraActive_) {
+			debugCamera_->Update();
+			camera_->matView = debugCamera_->GetCamera().matView;
+			camera_->matProjection = debugCamera_->GetCamera().matProjection;
+			camera_->TransferMatrix();
+		} else {
+			camera_->UpdateMatrix();
+		}
+
+		// ブロック
+		for (std::vector<WorldTransform*>& worldTransformBlockLine : worldTransformBlocks_) {
+			for (WorldTransform* worldTransformBlock : worldTransformBlockLine) {
+				if (!worldTransformBlock)
+					continue;
+
+				WorldMatrixUpdate(*worldTransformBlock);
+			}
+		}
+
+		DebugText::GetInstance()->ConsolePrintf("kDead\n");
+		break;
 	}
 
-	if (deathParticles_ != nullptr) {
-		deathParticles_->Update();
-	}
-
-	if (isDebugCameraActive_) {
-		debugCamera_->Update();
-		camera_->matView = debugCamera_->GetCamera().matView;
-		camera_->matProjection = debugCamera_->GetCamera().matProjection;
-		camera_->TransferMatrix();
-	} else {
-		camera_->UpdateMatrix();
-	}
-
-	cameraController_->Update();
-
-	CheckAllCollisions();
+	ChangePhase();
 };
 
 // 描画処理
@@ -160,36 +207,6 @@ void GameScene::Draw() {
 };
 
 void GameScene::GenerateBlocks() {
-
-	//// 要素数
-	// const uint32_t kNumBlockVirtical = 10;
-	// const uint32_t kNumBlockHorizontal = 20;
-	//// ブロック1個分の横幅
-	// const float kBlockWidth = 2.0f;
-	// const float kBlockHeight = 2.0f;
-	//// 要素数を変更する
-	//// 列数を設定 (縦方向のブロック数)
-	// worldTransformBlocks_.resize(kNumBlockVirtical);
-	// for (uint32_t i = 0; i < kNumBlockVirtical; ++i) {
-	//	// 1列の要素数を設定 (横方向のブロック数)
-	//	worldTransformBlocks_[i].resize(kNumBlockHorizontal);
-	// }
-
-	//// ブロックの生成
-	// for (uint32_t i = 0; i < kNumBlockVirtical; ++i) {
-	//	for (uint32_t j = 0; j < kNumBlockHorizontal; ++j) {
-	//		if (j % 2 == 0 && i % 2 == 1) {
-	//			continue;
-	//		} else if (j % 2 == 1 && i % 2 == 0) {
-	//			continue;
-	//		}
-	//		worldTransformBlocks_[i][j] = new WorldTransform();
-	//		worldTransformBlocks_[i][j]->Initialize();
-	//		worldTransformBlocks_[i][j]->translation_.x = kBlockWidth * j;
-	//		worldTransformBlocks_[i][j]->translation_.y = kBlockHeight * i;
-	//	}
-	// }
-
 	uint32_t numBlockVirtical = mapChipField_->GetBlockVirtical();
 	uint32_t numBlockHorizontal = mapChipField_->GetBlockHorizontal();
 	// 要素数を変更する
@@ -230,5 +247,19 @@ void GameScene::CheckAllCollisions() {
 		}
 	}
 #pragma endregion
+}
 
+void GameScene::ChangePhase() {
+	switch (phase_) {
+	case Phase::kPlay:
+		if (player_->IsDead()) {
+			phase_ = Phase::kDead;
+			const Vector3& deathParticlesPosition = player_->GetWorldPosition();
+
+			deathParticles_->Initialize(modelDeathParticles_, camera_, deathParticlesPosition);
+		}
+		break;
+	case Phase::kDead:
+		break;
+	}
 }
