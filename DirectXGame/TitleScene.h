@@ -11,6 +11,7 @@ private:
 	KamataEngine::Camera* camera_;
 
 public:
+	~TitleScene();
 	void Initialize();
 	void Update();
 	void Draw();
