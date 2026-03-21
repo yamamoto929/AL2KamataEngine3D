@@ -15,39 +15,35 @@ void TitleScene::Initialize() {
 
 	worldTransformPlayer_.Initialize();
 	worldTransformPlayer_.rotation_.y = std::numbers::pi_v<float>;
-	worldTransformTitleFont_.translation_.y -= 2.0f;
-	worldTransformPlayer_.scale_.x *= 1.5f;
-	worldTransformPlayer_.scale_.y *= 1.5f;
-	worldTransformPlayer_.scale_.z *= 1.5f;
+	worldTransformPlayer_.translation_.y = kPlayerTranslationY;
+	worldTransformPlayer_.scale_.x = kPlayerScale;
+	worldTransformPlayer_.scale_.y = kPlayerScale;
+	worldTransformPlayer_.scale_.z = kPlayerScale;
 
 	worldTransformTitleFont_.Initialize();
-	worldTransformTitleFont_.scale_.x *= 0.7f;
-	worldTransformTitleFont_.scale_.y *= 0.7f;
-	worldTransformTitleFont_.scale_.z *= 0.7f;
+	worldTransformTitleFont_.scale_.x = kTitleFontScale;
+	worldTransformTitleFont_.scale_.y = kTitleFontScale;
+	worldTransformTitleFont_.scale_.z = kTitleFontScale;
 	
-	worldTransformTitleFont_.translation_.y += 2.0f;
+	worldTransformTitleFont_.translation_.y = kTitleFontTranslationY;
 
 	camera_ = new Camera();
 	camera_->Initialize();
 
-	camera_->translation_.z = -15.0f;
+	camera_->translation_.z = kCameraTranslationZ;
 };
 
 void TitleScene::Update() { 
-	if (Input::GetInstance()->PushKey(DIK_W)) {
-		worldTransformPlayer_.translation_.z -= 1.f;
-	} else if (Input::GetInstance()->PushKey(DIK_S)) {
-		worldTransformPlayer_.translation_.z += 1.f;
+	if (Input::GetInstance()->PushKey(DIK_SPACE)) {
+		finished_ = true;
 	}
 
+	worldTransformTitleFont_.rotation_.y += kTitleFontRotationSpeedY;
+	
 	WorldMatrixUpdate(worldTransformPlayer_);
 	WorldMatrixUpdate(worldTransformTitleFont_);
 
 	camera_->UpdateMatrix();
-
-	if (Input::GetInstance()->TriggerKey(DIK_SPACE)) {
-		DebugText::GetInstance()->ConsolePrintf("%f\n", camera_->translation_.z);
-	}
 }
 
 void TitleScene::Draw() {

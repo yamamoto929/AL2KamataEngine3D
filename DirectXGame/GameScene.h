@@ -1,11 +1,11 @@
 #pragma once
+#include "CameraController.h"
+#include "DeathParticles.h"
+#include "Enemy.h"
 #include "KamataEngine.h"
 #include "MapChipField.h"
 #include "Player.h"
-#include "Enemy.h"
 #include "Skydome.h"
-#include "CameraController.h"
-#include "DeathParticles.h"
 
 // ゲームシーン
 class GameScene {
@@ -34,19 +34,18 @@ private:
 
 	CameraController* cameraController_ = nullptr;
 
-	const uint32_t kEnemyMax = 1; 
+	const uint32_t kEnemyMax = 1;
 	std::list<Enemy*> enemies_;
 	KamataEngine::Model* modelEnemy_ = nullptr;
 
 	DeathParticles* deathParticles_ = nullptr;
 	KamataEngine::Model* modelDeathParticles_ = nullptr;
 
-	enum class Phase {
-		kPlay,
-		kDead
-	};
+	enum class Phase { kPlay, kDead };
 
 	Phase phase_;
+
+	bool finished_ = false;
 
 public:
 	~GameScene();
@@ -64,4 +63,11 @@ public:
 	void CheckAllCollisions();
 
 	void ChangePhase();
+
+	bool IsFinished() const { return finished_; }
+
+	void UpdateEnemies();
+	void UpdateCamera();
+	void UpdateBlocks();
+	void UpdateDeathParticles();
 };

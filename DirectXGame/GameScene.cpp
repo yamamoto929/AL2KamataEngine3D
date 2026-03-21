@@ -93,11 +93,6 @@ void GameScene::Initialize() {
 void GameScene::Update() {
 	switch (phase_) {
 	case Phase::kPlay:
-		// #ifdef _DEBUG
-		//		if (Input::GetInstance()->TriggerKey(DIK_SPACE)) {
-		//			isDebugCameraActive_ = !isDebugCameraActive_;
-		//		}
-		// #endif
 		
 		//  天球
 		skydome_->Update();
@@ -106,32 +101,16 @@ void GameScene::Update() {
 		player_->Update();
 
 		// 敵(複数)
-		for (Enemy* enemy : enemies_) {
-			enemy->Update();
-		}
+		UpdateEnemies();
 
 		// カメラコントローラー
 		cameraController_->Update();
 
 		// カメラ
-		if (isDebugCameraActive_) {
-			debugCamera_->Update();
-			camera_->matView = debugCamera_->GetCamera().matView;
-			camera_->matProjection = debugCamera_->GetCamera().matProjection;
-			camera_->TransferMatrix();
-		} else {
-			camera_->UpdateMatrix();
-		}
+		UpdateCamera();
 
 		// ブロック
-		for (std::vector<WorldTransform*>& worldTransformBlockLine : worldTransformBlocks_) {
-			for (WorldTransform* worldTransformBlock : worldTransformBlockLine) {
-				if (!worldTransformBlock)
-					continue;
-
-				WorldMatrixUpdate(*worldTransformBlock);
-			}
-		}
+		UpdateBlocks();
 
 		// すべての当たり判定
 		CheckAllCollisions();
@@ -142,36 +121,16 @@ void GameScene::Update() {
 		skydome_->Update();
 
 		// 敵(複数)
-		for (Enemy* enemy : enemies_) {
-			enemy->Update();
-		}
+		UpdateEnemies();
 
 		// 死亡時のパーティクル
-		if (deathParticles_ != nullptr) {
-			deathParticles_->Update();
-		}
+		UpdateDeathParticles();
 
 		// カメラ
-		if (isDebugCameraActive_) {
-			debugCamera_->Update();
-			camera_->matView = debugCamera_->GetCamera().matView;
-			camera_->matProjection = debugCamera_->GetCamera().matProjection;
-			camera_->TransferMatrix();
-		} else {
-			camera_->UpdateMatrix();
-		}
+		UpdateCamera();
 
 		// ブロック
-		for (std::vector<WorldTransform*>& worldTransformBlockLine : worldTransformBlocks_) {
-			for (WorldTransform* worldTransformBlock : worldTransformBlockLine) {
-				if (!worldTransformBlock)
-					continue;
-
-				WorldMatrixUpdate(*worldTransformBlock);
-			}
-		}
-
-		DebugText::GetInstance()->ConsolePrintf("kDead\n");
+		UpdateBlocks();
 		break;
 	}
 
@@ -261,5 +220,43 @@ void GameScene::ChangePhase() {
 		break;
 	case Phase::kDead:
 		break;
+	}
+}
+
+void GameScene::UpdateEnemies() {
+	for (Enemy* enemy : enemies_) {
+		enemy->Update();
+	}
+};
+
+void GameScene::UpdateCamera() {
+	if (isDebugCameraActive_) {
+		debugCamera_->Update();
+		camera_->matView = debugCamera_->GetCamera().matView;
+		camera_->matProjection = debugCamera_->GetCamera().matProjection;
+		camera_->TransferMatrix();
+	} else {
+		camera_->UpdateMatrix();
+	}
+};
+
+void GameScene::UpdateBlocks() {
+	for (std::vector<WorldTransform*>& worldTransformBlockLine : worldTransformBlocks_) {
+		for (WorldTransform* worldTransformBlock : worldTransformBlockLine) {
+			if (!worldTransformBlock)
+				continue;
+
+			WorldMatrixUpdate(*worldTransformBlock);
+		}
+	}
+};
+
+void GameScene::UpdateDeathParticles() {
+	if (deathParticles_ && deathParticles_->IsFinished()) {
+		finished_ = true;
+	}
+
+	if (deathParticles_ != nullptr) {
+		deathParticles_->Update();
 	}
 }
