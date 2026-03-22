@@ -2,6 +2,7 @@
 #include "CameraController.h"
 #include "DeathParticles.h"
 #include "Enemy.h"
+#include "Fade.h"
 #include "KamataEngine.h"
 #include "MapChipField.h"
 #include "Player.h"
@@ -41,11 +42,15 @@ private:
 	DeathParticles* deathParticles_ = nullptr;
 	KamataEngine::Model* modelDeathParticles_ = nullptr;
 
-	enum class Phase { kPlay, kDead };
+	enum class Phase { kFadeIn, kPlay, kDead, kFadeOut };
 
 	Phase phase_;
 
 	bool finished_ = false;
+
+	Fade* fade_ = nullptr;
+
+	static const inline float kFadingTime = 0.75f;
 
 public:
 	~GameScene();

@@ -1,7 +1,14 @@
 #pragma once
 #include "KamataEngine.h"
+#include "Fade.h"
 class TitleScene {
 private:
+	enum class Phase {
+		kFadeIn,
+		kMain,
+		kFadeOut
+	};
+
 	KamataEngine::Model* modelPlayer_ = nullptr;
 	KamataEngine::Model* modelTitleFont_ = nullptr;
 
@@ -19,6 +26,12 @@ private:
 	static const inline float kTitleFontRotationSpeedY = -0.03f;
 
 	bool finished_ = false;
+
+	Fade* fade_ = nullptr;
+
+	static const inline float kFadingTime = 0.75f;
+
+	Phase phase_ = Phase::kFadeIn;
 
 public:
 	~TitleScene();

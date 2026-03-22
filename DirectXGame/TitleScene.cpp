@@ -7,6 +7,7 @@ TitleScene::~TitleScene() {
 	delete modelPlayer_;
 	delete modelTitleFont_;
 	delete camera_;
+	delete fade_;
 };
 
 void TitleScene::Initialize() { 
@@ -31,11 +32,34 @@ void TitleScene::Initialize() {
 	camera_->Initialize();
 
 	camera_->translation_.z = kCameraTranslationZ;
+
+	fade_ = new Fade;
+	fade_->Initialize();
+
+	fade_->Start(Fade::Status::FadeIn, kFadingTime);
 };
 
 void TitleScene::Update() { 
-	if (Input::GetInstance()->PushKey(DIK_SPACE)) {
-		finished_ = true;
+	switch (phase_) {
+	case Phase::kMain:
+		if (Input::GetInstance()->PushKey(DIK_SPACE)) {
+			phase_ = Phase::kFadeOut;
+			fade_->Start(Fade::Status::FadeOut, kFadingTime);
+		}
+		break;
+
+	case Phase::kFadeIn:
+	case Phase::kFadeOut:
+		fade_->Update();
+
+		if (fade_->isFinished()) {
+			if (phase_ == Phase::kFadeIn) {
+				phase_ = Phase::kMain;
+			} else {
+				finished_ = true;
+			}
+		}
+		break;
 	}
 
 	worldTransformTitleFont_.rotation_.y += kTitleFontRotationSpeedY;
@@ -47,8 +71,15 @@ void TitleScene::Update() {
 }
 
 void TitleScene::Draw() {
+	
 	Model::PreDraw();
 	modelPlayer_->Draw(worldTransformPlayer_, *camera_);
 	modelTitleFont_->Draw(worldTransformTitleFont_, *camera_);
 	Model::PostDraw();
+
+	if (phase_ == Phase::kMain) {
+		return;
+	}
+
+	fade_->Draw();
 };

@@ -86,53 +86,54 @@ void GameScene::Initialize() {
 	cameraController_->SetMovableArea(movableArea);
 	cameraController_->Reset();
 
-	phase_ = Phase::kPlay;
+	phase_ = Phase::kFadeIn;
+
+	fade_ = new Fade;
+	fade_->Initialize();
+
+	fade_->Start(Fade::Status::FadeIn, kFadingTime);
 };
 
 // 更新処理
 void GameScene::Update() {
+	//  天球
+	skydome_->Update();
+
+	// 天球（全フェーズ共通）
+	skydome_->Update();
+
 	switch (phase_) {
+	case Phase::kFadeIn:
 	case Phase::kPlay:
-		
-		//  天球
-		skydome_->Update();
-
-		// プレイヤー
 		player_->Update();
-
-		// 敵(複数)
 		UpdateEnemies();
-
-		// カメラコントローラー
 		cameraController_->Update();
-
-		// カメラ
 		UpdateCamera();
-
-		// ブロック
 		UpdateBlocks();
-
-		// すべての当たり判定
 		CheckAllCollisions();
+
+		if (phase_ == Phase::kFadeIn) {
+			fade_->Update();
+		}
 		break;
 
 	case Phase::kDead:
-		// 天球
-		skydome_->Update();
-
-		// 敵(複数)
+	case Phase::kFadeOut:
 		UpdateEnemies();
 
-		// 死亡時のパーティクル
-		UpdateDeathParticles();
+		if (phase_ == Phase::kDead) {
+			UpdateDeathParticles();
+		}
 
-		// カメラ
 		UpdateCamera();
-
-		// ブロック
 		UpdateBlocks();
+
+		if (phase_ == Phase::kFadeOut) {
+			fade_->Update();
+		}
 		break;
 	}
+
 
 	ChangePhase();
 };
@@ -163,6 +164,12 @@ void GameScene::Draw() {
 	}
 
 	Model::PostDraw();
+
+	if (phase_ == Phase::kPlay || phase_ == Phase::kDead) {
+		return;
+	}
+
+	fade_->Draw();
 };
 
 void GameScene::GenerateBlocks() {
@@ -219,7 +226,21 @@ void GameScene::ChangePhase() {
 		}
 		break;
 	case Phase::kDead:
+		if (deathParticles_ && deathParticles_->IsFinished()) {
+			phase_ = Phase::kFadeOut;
+			fade_->Start(Fade::Status::FadeOut, kFadingTime);
+		}
 		break;
+	case Phase::kFadeIn:
+	case Phase::kFadeOut:
+		if (fade_->isFinished()) {
+
+			if (phase_ == Phase::kFadeIn) {
+				phase_ = Phase::kPlay;
+			} else {
+				finished_ = true;
+			}
+		}
 	}
 }
 
@@ -252,9 +273,9 @@ void GameScene::UpdateBlocks() {
 };
 
 void GameScene::UpdateDeathParticles() {
-	if (deathParticles_ && deathParticles_->IsFinished()) {
+	/*if (deathParticles_ && deathParticles_->IsFinished()) {
 		finished_ = true;
-	}
+	}*/
 
 	if (deathParticles_ != nullptr) {
 		deathParticles_->Update();
