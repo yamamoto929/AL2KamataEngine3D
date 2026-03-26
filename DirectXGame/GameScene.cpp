@@ -99,6 +99,9 @@ void GameScene::Update() {
 	//  天球
 	skydome_->Update();
 
+	// 天球（全フェーズ共通）
+	skydome_->Update();
+
 	switch (phase_) {
 	case Phase::kFadeIn:
 	case Phase::kPlay:

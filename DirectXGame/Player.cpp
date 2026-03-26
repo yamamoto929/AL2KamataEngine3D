@@ -1,10 +1,12 @@
 #define NOMINMAX
 #include "Player.h"
+#include "Easing.h"
 #include "Vector3Operator.h"
 #include "WorldMatrixUpdate.h"
 #include <algorithm>
 #include <cassert>
 #include <numbers>
+#include "2d/ImGuiManager.h"
 
 using namespace KamataEngine;
 
@@ -14,12 +16,70 @@ void Player::Initialize(Model* model, Camera* camera, const Vector3& position) {
 	worldTransform_.Initialize();
 	worldTransform_.translation_ = position;
 	worldTransform_.rotation_.y = std::numbers::pi_v<float> / 2.0f;
-	//worldTransform_.translation_.y = 1.0f;
-	// worldTransform_.translation_.x += 2.0f;
+	// worldTransform_.translation_.y = 1.0f;
+	//  worldTransform_.translation_.x += 2.0f;
 	camera_ = camera;
 }
 
 void Player::Update() {
+	if (behaviorRequest_ != Behavior::kUnknown) {
+		behavior_ = behaviorRequest_;
+		switch (behavior_) {
+		case Behavior::kRoot:
+		default:
+			BehaviorRootInitialize();
+			break;
+		case Behavior::kAttack:
+			BehaviorAttackInitialize();
+			break;
+		}
+
+		behaviorRequest_ = Behavior::kUnknown;
+	}
+
+	if (behaviorRequest_ == Behavior::kAttack) {
+		ImGui::Text("Behavior : kAttack");
+	} else if (behaviorRequest_ == Behavior::kRoot) {
+		ImGui::Text("Behavior : kRoot");
+	} else {
+		ImGui::Text("Behavior : ???");
+	}
+
+	switch (behavior_) {
+	case Behavior::kRoot:
+
+		BehaviorRootUpdate();
+		break;
+	case Behavior::kAttack:
+		BehaviorAttackUpdate();
+		break;
+	}
+
+	// 旋回制御
+	if (turnTimer_ > 0.0f) {
+		turnTimer_ -= 1.0f / 60.0f;
+
+		float t = 1.0f - (turnTimer_ / kTimeTurn);
+
+		float easedT = 1.0f - powf(1.0f - t, 5.0f);
+		// 左右の自キャラ角度テーブル
+		float destinationRotationYTable[] = {std::numbers::pi_v<float> / 2.0f, std::numbers::pi_v<float> * 3.0f / 2.0f};
+		// 状態に応じた目標角度を取得する
+		float destinationRotationY = destinationRotationYTable[static_cast<uint32_t>(lrDirection_)];
+		// 自キャラの角度を設定する
+		worldTransform_.rotation_.y = turnFirstRotationY_ + (destinationRotationY - turnFirstRotationY_) * easedT;
+	}
+
+	WorldMatrixUpdate(worldTransform_);
+
+	
+}
+
+void Player::BehaviorRootUpdate() {
+	if (Input::GetInstance()->TriggerKey(DIK_SPACE)) {
+		behaviorRequest_ = Behavior::kAttack;
+	}
+
 	Move();
 
 	CollisionMapInfo collisionMapInfo;
@@ -36,32 +96,83 @@ void Player::Update() {
 	GroundedStatusHandling(collisionMapInfo);
 
 	OnContactWall(collisionMapInfo);
+};
 
-	// 旋回制御
-	if (turnTimer_ > 0.0f) {
-		turnTimer_ -= 1.0f / 60.0f;
+void Player::BehaviorAttackUpdate() {
+	movingAttackCount_ += 1.0f / 60.0f;
 
-		float t = 1.0f - (turnTimer_ / kTimeTurn);
+	Vector3 velocity{};
+	switch (attackPhase_) {
+	case AttackPhase::kPrepare:
+	default: {
+		float t = movingAttackCount_ / kPrepareTime;
+		worldTransform_.scale_.z = EaseOut(1.0f, 0.07f, t);
+		worldTransform_.scale_.y = EaseOut(1.0f, 1.5f, t);
 
-		float easedT = 1.0f - powf(1.0f - t, 5.0f);
-		// 左右の自キャラ角度テーブル
-		float destinationRotationYTable[] = {std::numbers::pi_v<float> / 2.0f, std::numbers::pi_v<float> * 3.0f / 2.0f};
-		// 状態に応じた目標角度を取得する
-		float destinationRotationY = destinationRotationYTable[static_cast<uint32_t>(lrDirection_)];
-		// 自キャラの角度を設定する
-		worldTransform_.rotation_.y = turnFirstRotationY_ + (destinationRotationY - turnFirstRotationY_) * easedT;
+		// 突進移行
+		if (movingAttackCount_ >= kPrepareTime) {
+			attackPhase_ = AttackPhase::kRush;
+			movingAttackCount_ = 0.0f;
+		}
+		break;
 	}
-	
-	WorldMatrixUpdate(worldTransform_);
+	case AttackPhase::kRush: {
+		float t = movingAttackCount_ / kRushTime;
+		worldTransform_.scale_.z = EaseOut(0.07f, 1.7f, t);
+		worldTransform_.scale_.y = EaseIn(1.5f, 0.1f, t);
 
-	
-}
+		if (lrDirection_ == LRDirection::kRight) {
+			velocity.x = +kAttackVelocity;
+		} else {
+			velocity.x = -kAttackVelocity;
+		}
 
-void Player::Draw() { 
+		// 余韻移行
+		if (movingAttackCount_ >= kRushTime) {
+			attackPhase_ = AttackPhase::kRecovery;
+			movingAttackCount_ = 0.0f;
+		}
+		break;
+	}
+	case AttackPhase::kRecovery: {
+		float t = movingAttackCount_ / kRecoveryTime;
+		worldTransform_.scale_.z = EaseOut(1.5f, 1.0f, t);
+		worldTransform_.scale_.y = EaseOut(0.5f, 1.0f, t);
+
+		if (movingAttackCount_ >= kRecoveryTime) {
+			behaviorRequest_ = Behavior::kRoot;
+		}
+
+		break;
+	}
+	}
+
+	CollisionMapInfo collisionMapInfo;
+	collisionMapInfo.velocity = velocity;
+
+	CheckMapCollidion(collisionMapInfo);
+
+	// worldTransform_.translation_ += velocity_;
+
+	MoveByResult(collisionMapInfo);
+
+	OnContactCeiling(collisionMapInfo);
+
+	GroundedStatusHandling(collisionMapInfo);
+
+	OnContactWall(collisionMapInfo);
+	/*
+
+	if (movingAttackCount_ >= kMovingAttackCountMax_) {
+	    behaviorRequest_ = Behavior::kRoot;
+	}*/
+};
+
+void Player::Draw() {
 	if (isDead_) {
 		return;
 	}
-	model_->Draw(worldTransform_, *camera_); 
+	model_->Draw(worldTransform_, *camera_);
 }
 
 void Player::Move() {
@@ -248,7 +359,7 @@ void Player::CheckMapCollidionLeft(CollisionMapInfo& info) {
 
 	if (hit) {
 		// めり込みを排除するために移動量を設定する
-		 indexSet = mapChipField_->GetMapChipIndexSetByPosition(positionsNew[kLEFTTOP]);
+		indexSet = mapChipField_->GetMapChipIndexSetByPosition(positionsNew[kLEFTTOP]);
 		MapChipField::IndexSet indexSetNow = mapChipField_->GetMapChipIndexSetByPosition(CornerPosition(worldTransform_.translation_, kLEFTTOP));
 
 		if (indexSet.xIndex != indexSetNow.xIndex) {
@@ -291,7 +402,7 @@ void Player::CheckMapCollidionRight(CollisionMapInfo& info) {
 
 	if (hit) {
 		// めり込みを排除するために移動量を設定する
-		 indexSet = mapChipField_->GetMapChipIndexSetByPosition(positionsNew[kRIGHTTOP]);
+		indexSet = mapChipField_->GetMapChipIndexSetByPosition(positionsNew[kRIGHTTOP]);
 		MapChipField::IndexSet indexSetNow = mapChipField_->GetMapChipIndexSetByPosition(CornerPosition(worldTransform_.translation_, kRIGHTTOP));
 
 		if (indexSet.xIndex != indexSetNow.xIndex) {
@@ -380,7 +491,7 @@ Vector3 Player::GetWorldPosition() {
 };
 
 AABB Player::GetAABB() {
-	Vector3 worldPos=GetWorldPosition();
+	Vector3 worldPos = GetWorldPosition();
 	AABB aabb{};
 	aabb.min = {worldPos.x - kWidth / 2.0f, worldPos.y - kHeight / 2.0f, worldPos.z - kWidth};
 	aabb.max = {worldPos.x + kWidth / 2.0f, worldPos.y + kHeight / 2.0f, worldPos.z + kWidth};
@@ -391,4 +502,15 @@ AABB Player::GetAABB() {
 void Player::OnCollision(const Enemy* enemy) {
 	(void)enemy;
 	isDead_ = true;
+};
+
+void Player::BehaviorRootInitialize() {
+
+};
+
+void Player::BehaviorAttackInitialize() {
+	// カウンタ初期化
+	movingAttackCount_ = 0.0f;
+	velocity_ = Vector3{0.0f, 0.0f, 0.0f};
+	attackPhase_ = AttackPhase::kPrepare;
 };

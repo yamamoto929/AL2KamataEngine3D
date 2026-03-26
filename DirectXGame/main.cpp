@@ -35,21 +35,26 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	// DirectXCommonインスタンスの取得
 	DirectXCommon* dxCommon = DirectXCommon::GetInstance();
 
+	ImGuiManager* imguiManager = ImGuiManager::GetInstance();
+
 	// メインループ
 	while (true) {
 		// エンジンの更新
 		if (KamataEngine::Update()) {
 			break;
 		}
+		imguiManager->Begin();
 
 		ChangeScene();
 		UpdateScene();
 
+		imguiManager->End();
 		// 描画開始
 		dxCommon->PreDraw();
 
 		DrawScene();
 
+		imguiManager->Draw();
 		// 描画終了
 		dxCommon->PostDraw();
 	}

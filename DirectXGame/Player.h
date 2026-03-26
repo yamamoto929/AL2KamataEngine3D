@@ -1,7 +1,7 @@
 #pragma once
+#include "AABB.h"
 #include "KamataEngine.h"
 #include "MapChipField.h"
-#include "AABB.h"
 
 class MapChipField;
 class Enemy;
@@ -14,12 +14,14 @@ public:
 		KamataEngine::Vector3 velocity = KamataEngine::Vector3{0.0f, 0.0f, 0.0f};
 	};
 
-	enum Corner {
-		kRIGHTBOTTOM,
-		kLEFTBOTTOM,
-		kRIGHTTOP,
-		kLEFTTOP,
-		kNUMCORNER
+	enum Corner { kRIGHTBOTTOM, kLEFTBOTTOM, kRIGHTTOP, kLEFTTOP, kNUMCORNER };
+
+	enum class Behavior { kUnknown, kRoot, kAttack };
+
+	enum class AttackPhase {
+		kPrepare, // ため時間
+		kRush,    // 突撃
+		kRecovery // 余韻
 	};
 
 private:
@@ -68,6 +70,19 @@ private:
 
 	// デスフラグ
 	bool isDead_ = false;
+
+	float movingAttackCount_ = 0.0f;
+	static inline const float kMovingAttackCountMax_ = 1.0f;
+
+	Behavior behavior_ = Behavior::kRoot;
+	Behavior behaviorRequest_ = Behavior::kUnknown;
+
+	AttackPhase attackPhase_;
+	static inline const float kPrepareTime = 0.05f;
+	static inline const float kRushTime = 0.3f;
+	static inline const float kRecoveryTime = 0.05f;
+
+	static inline const float kAttackVelocity = 0.3f;
 
 public:
 	/// <summary>
@@ -120,4 +135,10 @@ public:
 	void OnCollision(const Enemy* enemy);
 
 	bool IsDead() const { return isDead_; }
+
+	void BehaviorRootUpdate();
+	void BehaviorAttackUpdate();
+
+	void BehaviorRootInitialize();
+	void BehaviorAttackInitialize();
 };
