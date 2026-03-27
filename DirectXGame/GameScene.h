@@ -54,6 +54,7 @@ private:
 
 	KamataEngine::Model* modelAttack_;
 
+
 public:
 	~GameScene();
 	// 初期化
