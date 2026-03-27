@@ -52,6 +52,8 @@ private:
 
 	static const inline float kFadingTime = 0.75f;
 
+	KamataEngine::Model* modelAttack_;
+
 public:
 	~GameScene();
 	// 初期化

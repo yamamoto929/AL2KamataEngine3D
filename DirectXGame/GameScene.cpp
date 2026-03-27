@@ -34,6 +34,8 @@ void GameScene::Initialize() {
 	textureHandleBlock_ = TextureManager::Load("uvChecker.png");
 
 	modelPlayer_ = Model::CreateFromOBJ("player", true);
+	modelAttack_ = Model::CreateFromOBJ("hit_effect", true);
+
 	modelBlock_ = Model::CreateFromOBJ("box", true);
 	modelEnemy_ = Model::CreateFromOBJ("enemy", true);
 	modelDeathParticles_ = Model::CreateFromOBJ("deathParticle", true);
@@ -59,7 +61,7 @@ void GameScene::Initialize() {
 	Vector3 playerPosition = mapChipField_->GetMapChipPositionByIndex(5, 14);
 
 	player_ = new Player();
-	player_->Initialize(modelPlayer_, camera_, playerPosition);
+	player_->Initialize(modelPlayer_,modelAttack_, camera_, playerPosition);
 
 	player_->SetMapChipField(mapChipField_);
 

@@ -10,12 +10,14 @@
 
 using namespace KamataEngine;
 
-void Player::Initialize(Model* model, Camera* camera, const Vector3& position) {
+void Player::Initialize(Model* model, KamataEngine::Model* modelAttack,Camera* camera, const Vector3& position) {
 	assert(model);
 	model_ = model;
+	modelAttack_ = modelAttack;
 	worldTransform_.Initialize();
 	worldTransform_.translation_ = position;
 	worldTransform_.rotation_.y = std::numbers::pi_v<float> / 2.0f;
+	worldTransformAttack_.Initialize();
 	// worldTransform_.translation_.y = 1.0f;
 	//  worldTransform_.translation_.x += 2.0f;
 	camera_ = camera;
@@ -37,13 +39,7 @@ void Player::Update() {
 		behaviorRequest_ = Behavior::kUnknown;
 	}
 
-	if (behaviorRequest_ == Behavior::kAttack) {
-		ImGui::Text("Behavior : kAttack");
-	} else if (behaviorRequest_ == Behavior::kRoot) {
-		ImGui::Text("Behavior : kRoot");
-	} else {
-		ImGui::Text("Behavior : ???");
-	}
+	
 
 	switch (behavior_) {
 	case Behavior::kRoot:
@@ -71,13 +67,16 @@ void Player::Update() {
 	}
 
 	WorldMatrixUpdate(worldTransform_);
-
-	
+	WorldMatrixUpdate(worldTransformAttack_);
 }
 
 void Player::BehaviorRootUpdate() {
 	if (Input::GetInstance()->TriggerKey(DIK_SPACE)) {
-		behaviorRequest_ = Behavior::kAttack;
+
+		if (canRush_) {
+			behaviorRequest_ = Behavior::kAttack;
+			canRush_ = false;
+		}
 	}
 
 	Move();
@@ -147,6 +146,9 @@ void Player::BehaviorAttackUpdate() {
 	}
 	}
 
+	worldTransformAttack_.translation_ = worldTransform_.translation_;
+	worldTransformAttack_.rotation_= worldTransform_.rotation_;
+
 	CollisionMapInfo collisionMapInfo;
 	collisionMapInfo.velocity = velocity;
 
@@ -173,6 +175,10 @@ void Player::Draw() {
 		return;
 	}
 	model_->Draw(worldTransform_, *camera_);
+
+	if (behavior_ == Behavior::kAttack && attackPhase_ == AttackPhase::kRush) {
+		modelAttack_->Draw(worldTransformAttack_, *camera_);
+	}
 }
 
 void Player::Move() {
@@ -215,9 +221,9 @@ void Player::Move() {
 			velocity_.x *= (1.0f - kAttenuation);
 		}
 
-		if (Input::GetInstance()->PushKey(DIK_UP)) {
-			// ジャンプ初速
-			velocity_ += Vector3(0, kJumpAcceleration, 0);
+		if (Input::GetInstance()->PushKey(DIK_UP)) {	
+				// ジャンプ初速
+				velocity_ += Vector3(0, kJumpAcceleration, 0);	
 		}
 	} else {
 		// 落下速度
@@ -459,6 +465,8 @@ void Player::GroundedStatusHandling(const CollisionMapInfo& info) {
 
 			if (!hit) {
 				onGround_ = false;
+			} else {
+				canRush_ = true;
 			}
 		}
 
@@ -466,6 +474,8 @@ void Player::GroundedStatusHandling(const CollisionMapInfo& info) {
 
 		if (info.isLanding) {
 			onGround_ = true;
+
+			canRush_ = true;
 
 			velocity_.x *= (1.0f - kAttenuationLanding);
 

@@ -27,7 +27,11 @@ public:
 private:
 	uint32_t textureHandle_ = 0;
 	KamataEngine::Model* model_ = nullptr;
+	KamataEngine::Model* modelAttack_ = nullptr;
+
 	KamataEngine::WorldTransform worldTransform_;
+	KamataEngine::WorldTransform worldTransformAttack_;
+
 	KamataEngine::Camera* camera_ = nullptr;
 
 	KamataEngine::Vector3 position_ = {};
@@ -84,6 +88,8 @@ private:
 
 	static inline const float kAttackVelocity = 0.3f;
 
+	bool canRush_ = true;
+
 public:
 	/// <summary>
 	/// 初期化
@@ -91,7 +97,7 @@ public:
 	/// <param name="model">モデル</param>
 	/// <param name="camera">カメラ</param>
 	/// <param name="position">位置</param>
-	void Initialize(KamataEngine::Model* model, KamataEngine::Camera* camera, const KamataEngine::Vector3& position);
+	void Initialize(KamataEngine::Model* model, KamataEngine::Model* modelAttack, KamataEngine::Camera* camera, const KamataEngine::Vector3& position);
 
 	/// <summary>
 	/// 更新
