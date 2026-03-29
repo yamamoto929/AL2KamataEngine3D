@@ -7,7 +7,7 @@ using namespace KamataEngine;
 GameScene::~GameScene() {
 	delete modelPlayer_;
 	delete modelBlock_;
-
+	delete modelHitEffect_;
 	for (std::vector<WorldTransform*>& worldTransformBlockLine : worldTransformBlocks_) {
 		for (WorldTransform* worldTransformBlock : worldTransformBlockLine) {
 			delete worldTransformBlock;
@@ -27,6 +27,10 @@ GameScene::~GameScene() {
 		delete enemy;
 	}
 	delete deathParticles_;
+
+	for (HitEffect* hitEffect : hitEffects_) {
+		delete hitEffect;
+	}
 }
 // 初期化
 void GameScene::Initialize() {
@@ -77,7 +81,7 @@ void GameScene::Initialize() {
 		Enemy* newEnemy = new Enemy();
 		uint32_t enemyPositionXIndex = static_cast<uint32_t>(i) + 20;
 		Vector3 enemyPosition = mapChipField_->GetMapChipPositionByIndex(enemyPositionXIndex, 18);
-		newEnemy->Initialize(modelEnemy_, camera_, enemyPosition);
+		newEnemy->Initialize(modelEnemy_, camera_, enemyPosition,this);
 		enemies_.push_back(newEnemy);
 	}
 
@@ -87,6 +91,10 @@ void GameScene::Initialize() {
 	CameraController::Rect movableArea = {11.0f, 88.0f, 6.0f, 20.0f};
 	cameraController_->SetMovableArea(movableArea);
 	cameraController_->Reset();
+
+	modelHitEffect_ = Model::CreateFromOBJ("particle");
+	HitEffect::SetModel(modelHitEffect_);
+	HitEffect::SetCamera(camera_);
 
 	phase_ = Phase::kFadeIn;
 
@@ -101,15 +109,26 @@ void GameScene::Update() {
 	//  天球
 	skydome_->Update();
 
-	// 天球（全フェーズ共通）
-	skydome_->Update();
-
 	switch (phase_) {
 	case Phase::kFadeIn:
 	case Phase::kPlay:
 		player_->Update();
 		UpdateEnemies();
 		cameraController_->Update();
+
+		// ヒットエフェクト削除
+		hitEffects_.remove_if([](HitEffect* hitEffect) {
+			if (hitEffect->IsDead()) {
+				delete hitEffect;
+				return true;
+			}
+			return false;
+		});
+
+
+		for (HitEffect* hitEffect : hitEffects_) {
+			hitEffect->Update();
+		}
 		UpdateCamera();
 		UpdateBlocks();
 		CheckAllCollisions();
@@ -125,6 +144,19 @@ void GameScene::Update() {
 
 		if (phase_ == Phase::kDead) {
 			UpdateDeathParticles();
+		}
+		// ヒットエフェクト削除
+		hitEffects_.remove_if([](HitEffect* hitEffect) {
+			if (hitEffect->IsDead()) {
+				delete hitEffect;
+				return true; 
+			}
+			return false;
+		});
+
+		for (HitEffect* hitEffect : hitEffects_) {
+			
+			hitEffect->Update();
 		}
 
 		UpdateCamera();
@@ -159,6 +191,10 @@ void GameScene::Draw() {
 				continue;
 			modelBlock_->Draw(*worldTransformBlock, *camera_);
 		}
+	}
+
+	for (HitEffect* hitEffect : hitEffects_) {
+		 hitEffect->Draw();
 	}
 
 	if (deathParticles_ != nullptr) {
@@ -294,3 +330,8 @@ void GameScene::UpdateDeathParticles() {
 		deathParticles_->Update();
 	}
 }
+
+void GameScene::CreateHitEffect(KamataEngine::Vector3 spawnPoint) { 
+	HitEffect* newHitEffect = HitEffect::Create(spawnPoint); 
+	hitEffects_.push_back(newHitEffect);
+};

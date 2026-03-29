@@ -5,11 +5,13 @@
 #include "WorldMatrixUpdate.h"
 #include <cassert>
 #include <numbers>
+#include "GameScene.h"
 using namespace KamataEngine;
-void Enemy::Initialize(KamataEngine::Model* model, KamataEngine::Camera* camera, const KamataEngine::Vector3& position) {
+void Enemy::Initialize(KamataEngine::Model* model, KamataEngine::Camera* camera, const KamataEngine::Vector3& position, GameScene* gameScene) {
 	assert(model);
 	textureHandle_ = TextureManager::Load("uvChecker.png");
 	model_ = model;
+	gameScene_ = gameScene;
 	worldTransform_.Initialize();
 	worldTransform_.translation_ = position;
 	worldTransform_.rotation_.y = std::numbers::pi_v<float> * 3.0f / 2.0f;
@@ -73,9 +75,11 @@ void Enemy::OnCollision(const Player* player) {
 
 	if (player->IsAttack()) {
 		behaviorRequest_ = Behavior::kDeath;
+
+		Vector3 effectPos = (worldTransform_.translation_ + player->GetWorldTransform().translation_) / 2.0f;
+		gameScene_->CreateHitEffect(effectPos);
 	}
-	/*(void)player;
-	isDead_ = true;*/
+	
 };
 
 void Enemy::BehaviorWalkInitialize() {

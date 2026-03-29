@@ -7,6 +7,8 @@
 #include "MapChipField.h"
 #include "Player.h"
 #include "Skydome.h"
+#include "HitEffect.h"
+
 
 // ゲームシーン
 class GameScene {
@@ -16,6 +18,7 @@ private:
 
 	KamataEngine::Model* modelPlayer_ = nullptr;
 	KamataEngine::Model* modelBlock_ = nullptr;
+	KamataEngine::Model* modelHitEffect_ = nullptr;
 
 	KamataEngine::WorldTransform* worldTransform_;
 	KamataEngine::Camera* camera_;
@@ -53,7 +56,7 @@ private:
 	static const inline float kFadingTime = 0.75f;
 
 	KamataEngine::Model* modelAttack_;
-
+	std::list<HitEffect*> hitEffects_;
 
 public:
 	~GameScene();
@@ -78,4 +81,6 @@ public:
 	void UpdateCamera();
 	void UpdateBlocks();
 	void UpdateDeathParticles();
+	void CreateHitEffect(KamataEngine::Vector3 spawnPoint);
+	
 };

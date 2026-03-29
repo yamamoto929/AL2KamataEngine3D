@@ -91,6 +91,8 @@ private:
 	bool canRush_ = true;
 	bool isAttack_ = false;
 
+	
+
 public:
 	/// <summary>
 	/// 初期化

@@ -1,6 +1,7 @@
 #pragma once
 #include "AABB.h"
 #include "KamataEngine.h"
+class GameScene;
 class Player;
 class Enemy {
 private:
@@ -34,8 +35,10 @@ private:
 
 	bool isCollidionDisabled_ = false;
 
+	GameScene* gameScene_ = nullptr;
+
 public:
-	void Initialize(KamataEngine::Model* model, KamataEngine::Camera* camera, const KamataEngine::Vector3& position);
+	void Initialize(KamataEngine::Model* model, KamataEngine::Camera* camera, const KamataEngine::Vector3& position,GameScene* gameScene);
 	void Update();
 	void Draw();
 	KamataEngine::Vector3 GetWorldPosition();
