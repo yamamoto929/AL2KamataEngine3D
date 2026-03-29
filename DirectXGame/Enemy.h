@@ -13,7 +13,7 @@ private:
 	static inline const float kMoveSpeed = 0.01f;
 
 	KamataEngine::Vector3 velocity_ = {};
-
+	 
 	static inline const float kWalkMotionAngleStart = 0.0f;
 	static inline const float kWalkMotionAngleEnd = 45.0f;
 
