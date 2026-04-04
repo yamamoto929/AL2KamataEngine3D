@@ -1,17 +1,20 @@
 #pragma once
+#include "BaseEnemy.h"
 #include "CameraController.h"
 #include "DeathParticles.h"
 #include "Enemy.h"
 #include "Fade.h"
+#include "HitEffect.h"
+#include "GuardEffect.h"
+#include "BaseEffect.h"
 #include "KamataEngine.h"
 #include "MapChipField.h"
 #include "Player.h"
+#include "ShieldEnemy.h"
 #include "Skydome.h"
-#include "HitEffect.h"
-
 
 // ゲームシーン
-class GameScene {
+class GameScene final {
 private:
 	uint32_t textureHandle_ = 0;
 	uint32_t textureHandleBlock_ = 0;
@@ -39,7 +42,7 @@ private:
 	CameraController* cameraController_ = nullptr;
 
 	const uint32_t kEnemyMax = 1;
-	std::list<Enemy*> enemies_;
+	std::list<BaseEnemy*> enemies_;
 	KamataEngine::Model* modelEnemy_ = nullptr;
 
 	DeathParticles* deathParticles_ = nullptr;
@@ -55,8 +58,13 @@ private:
 
 	static const inline float kFadingTime = 0.75f;
 
-	KamataEngine::Model* modelAttack_;
-	std::list<HitEffect*> hitEffects_;
+	KamataEngine::Model* modelAttack_ = nullptr;
+	std::list<BaseEffect*> effects_;
+
+	KamataEngine::Model* modelShieldEnemy_ = nullptr;
+	KamataEngine::Model* modelGuardEffect_ = nullptr;
+
+
 
 public:
 	~GameScene();
@@ -82,5 +90,5 @@ public:
 	void UpdateBlocks();
 	void UpdateDeathParticles();
 	void CreateHitEffect(KamataEngine::Vector3 spawnPoint);
-	
+	void CreateGuardEffect(KamataEngine::Vector3 spawnPoint);
 };

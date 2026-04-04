@@ -1,5 +1,6 @@
 #pragma once
 #include "AABB.h"
+#include "BaseEnemy.h"
 #include "KamataEngine.h"
 #include "MapChipField.h"
 
@@ -16,12 +17,22 @@ public:
 
 	enum Corner { kRIGHTBOTTOM, kLEFTBOTTOM, kRIGHTTOP, kLEFTTOP, kNUMCORNER };
 
-	enum class Behavior { kUnknown, kRoot, kAttack };
+	enum class Behavior { kUnknown, kRoot, kAttack,kKnockback };
 
 	enum class AttackPhase {
 		kPrepare, // ため時間
 		kRush,    // 突撃
 		kRecovery // 余韻
+	};
+
+	enum class KnockbackPhase {
+		kLaunched,
+		kRecovery
+	};
+
+	enum class LRDirection {
+		kRight,
+		kLeft,
 	};
 
 private:
@@ -41,10 +52,7 @@ private:
 	static inline const float kAttenuation = 0.1f;
 	static inline const float kLimitRunSpeed = 0.5f;
 
-	enum class LRDirection {
-		kRight,
-		kLeft,
-	};
+	
 
 	LRDirection lrDirection_ = LRDirection::kRight;
 
@@ -84,14 +92,21 @@ private:
 	AttackPhase attackPhase_;
 	static inline const float kPrepareTime = 0.05f;
 	static inline const float kRushTime = 0.3f;
-	static inline const float kRecoveryTime = 0.05f;
+	static inline const float kAttackRecoveryTime = 0.05f;
 
 	static inline const float kAttackVelocity = 0.3f;
 
 	bool canRush_ = true;
 	bool isAttack_ = false;
 
+	KnockbackPhase knockbackPhase_;
+	float knockbackCount_ = 0.0f;
+	static inline const float kKnockbackRecoveryTime_ = 0.1f;
+	static inline const float kKnockbackLaunchedTime_ = 0.3f;
+
+	static inline const float kKnockbackVelocity = 0.3f;
 	
+	bool isKnockbackRequested_ = false;
 
 public:
 	/// <summary>
@@ -141,15 +156,21 @@ public:
 
 	AABB GetAABB();
 
-	void OnCollision(const Enemy* enemy);
+	//void OnCollision(const Enemy* enemy);
+
+	void OnCollision(const BaseEnemy* enemy);
 
 	bool IsDead() const { return isDead_; }
 
 	void BehaviorRootUpdate();
-	void BehaviorAttackUpdate();
-
 	void BehaviorRootInitialize();
+	void BehaviorAttackUpdate();
 	void BehaviorAttackInitialize();
+	void BehaviorKnockbackInitialize();
+	void BehaviorKnockbackUpdate();
 
 	bool IsAttack() const { return isAttack_; }
+	LRDirection GetLRDirection() const { return lrDirection_; }
+
+	void KnockbackRequest();
 };

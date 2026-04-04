@@ -24,6 +24,11 @@ void Player::Initialize(Model* model, KamataEngine::Model* modelAttack,Camera* c
 }
 
 void Player::Update() {
+
+	if (isKnockbackRequested_) {
+		behaviorRequest_ = Behavior::kKnockback;
+		isKnockbackRequested_ = false;
+	}
 	
 	if (behaviorRequest_ != Behavior::kUnknown) {
 		behavior_ = behaviorRequest_;
@@ -34,6 +39,9 @@ void Player::Update() {
 			break;
 		case Behavior::kAttack:
 			BehaviorAttackInitialize();
+			break;
+		case Behavior::kKnockback:
+			BehaviorKnockbackInitialize();
 			break;
 		}
 
@@ -49,6 +57,9 @@ void Player::Update() {
 		break;
 	case Behavior::kAttack:
 		BehaviorAttackUpdate();
+		break;
+	case Behavior::kKnockback:
+		BehaviorKnockbackUpdate();
 		break;
 	}
 
@@ -87,8 +98,6 @@ void Player::BehaviorRootUpdate() {
 	collisionMapInfo.velocity = velocity_;
 
 	CheckMapCollidion(collisionMapInfo);
-
-	// worldTransform_.translation_ += velocity_;
 
 	MoveByResult(collisionMapInfo);
 
@@ -137,11 +146,11 @@ void Player::BehaviorAttackUpdate() {
 		break;
 	}
 	case AttackPhase::kRecovery: {
-		float t = movingAttackCount_ / kRecoveryTime;
+		float t = movingAttackCount_ / kAttackRecoveryTime;
 		worldTransform_.scale_.z = EaseOut(1.5f, 1.0f, t);
 		worldTransform_.scale_.y = EaseOut(0.5f, 1.0f, t);
 
-		if (movingAttackCount_ >= kRecoveryTime) {
+		if (movingAttackCount_ >= kAttackRecoveryTime) {
 			behaviorRequest_ = Behavior::kRoot;
 		}
 
@@ -157,7 +166,46 @@ void Player::BehaviorAttackUpdate() {
 
 	CheckMapCollidion(collisionMapInfo);
 
-	// worldTransform_.translation_ += velocity_;
+	MoveByResult(collisionMapInfo);
+
+	OnContactCeiling(collisionMapInfo);
+
+	GroundedStatusHandling(collisionMapInfo);
+
+	OnContactWall(collisionMapInfo);
+};
+
+void Player::BehaviorKnockbackUpdate() {
+	knockbackCount_ += 1.0f / 60.0f;
+	Vector3 velocity = {0.0f};
+	switch (knockbackPhase_) {
+	case KnockbackPhase::kLaunched:{
+		if (lrDirection_ == LRDirection::kRight) {
+			velocity.x = -kKnockbackVelocity;
+		} else {
+			velocity.x = +kKnockbackVelocity;
+		}
+
+		// 突進移行
+		if (knockbackCount_ >= kKnockbackLaunchedTime_) {
+			knockbackCount_ = 0.0f;
+			knockbackPhase_ = KnockbackPhase::kRecovery;
+		}
+		break;
+	}
+	case KnockbackPhase::kRecovery: {
+
+		// 余韻移行
+		if (knockbackCount_ >= kKnockbackRecoveryTime_) {
+			behaviorRequest_ = Behavior::kRoot;
+		}
+		break;
+	}
+	}
+	CollisionMapInfo collisionMapInfo;
+	collisionMapInfo.velocity = velocity;
+
+	CheckMapCollidion(collisionMapInfo);
 
 	MoveByResult(collisionMapInfo);
 
@@ -166,11 +214,6 @@ void Player::BehaviorAttackUpdate() {
 	GroundedStatusHandling(collisionMapInfo);
 
 	OnContactWall(collisionMapInfo);
-	/*
-
-	if (movingAttackCount_ >= kMovingAttackCountMax_) {
-	    behaviorRequest_ = Behavior::kRoot;
-	}*/
 };
 
 void Player::Draw() {
@@ -512,7 +555,7 @@ AABB Player::GetAABB() {
 	return aabb;
 };
 
-void Player::OnCollision(const Enemy* enemy) {
+void Player::OnCollision(const BaseEnemy* enemy) {
 	if (IsAttack()) {
 		return;
 	}
@@ -521,7 +564,7 @@ void Player::OnCollision(const Enemy* enemy) {
 };
 
 void Player::BehaviorRootInitialize() {
-
+	
 };
 
 void Player::BehaviorAttackInitialize() {
@@ -529,4 +572,15 @@ void Player::BehaviorAttackInitialize() {
 	movingAttackCount_ = 0.0f;
 	velocity_ = Vector3{0.0f, 0.0f, 0.0f};
 	attackPhase_ = AttackPhase::kPrepare;
+};
+
+void Player::BehaviorKnockbackInitialize() {
+	knockbackCount_=0.0f;
+	velocity_ = Vector3{0.0f, 0.0f, 0.0f};
+	worldTransform_.scale_ = Vector3{1.0f, 1.0f, 1.0f};
+	knockbackPhase_ = KnockbackPhase::kLaunched;
+};
+
+void Player::KnockbackRequest() {
+	isKnockbackRequested_=true;
 };

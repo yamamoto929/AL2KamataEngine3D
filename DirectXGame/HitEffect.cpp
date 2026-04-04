@@ -1,14 +1,16 @@
 #include "HitEffect.h"
-#include "Easing.h"
-#include "RandomNumberGenerator.h"
-#include "WorldMatrixUpdate.h"
 #include <cassert>
+#include "Easing.h"
+#include "WorldMatrixUpdate.h"
+#include "RandomNumberGenerator.h"
+#include "KamataEngine.h"
 #include <numbers>
-using namespace KamataEngine;
-Model* HitEffect::model_ = nullptr;
-Camera* HitEffect::camera_ = nullptr;
 
-void HitEffect::Initialize(Vector3 spawnPoint) {
+using namespace KamataEngine;
+void HitEffect::Initialize(Vector3 spawnPoint, Model* model, Camera* camera) {
+	model_ = model;
+	camera_ = camera;
+
 	circleWorldTransform_.Initialize();
 	circleWorldTransform_.translation_ = spawnPoint;
 
@@ -25,16 +27,15 @@ void HitEffect::Initialize(Vector3 spawnPoint) {
 	}
 	animCount_ = 0.0f;
 	state_ = State::kSpread;
-};
+}
+
 
 void HitEffect::Update() {
 	animCount_ += 1.0f / 60.0f;
 	switch (state_) {
 	case State::kUnknown:
-	default: {
-
+	default:
 		break;
-	}
 	case State::kSpread: {
 		float t = animCount_ / kSpreadTime;
 		circleWorldTransform_.scale_.z = EaseOut(0.5f, 1.2f, t);
@@ -59,40 +60,32 @@ void HitEffect::Update() {
 		}
 		break;
 	}
-	case State::kDeath: {
+	case State::kDeath:
 		break;
-	}
 	}
 
 	WorldMatrixUpdate(circleWorldTransform_);
 	for (WorldTransform& worldTransform : ellipseWorldTransforms_) {
 		WorldMatrixUpdate(worldTransform);
 	}
-};
+}
 
 void HitEffect::Draw() {
-	if (camera_ == nullptr) {
+	if (camera_ == nullptr || state_ == State::kDeath || model_ == nullptr) {
 		return;
 	}
 
-	if (state_ == State::kDeath) {
-		return;
-	}
-
-	if (model_) {
-
-		circleColor_.SetColor(Vector4{1.0f, 1.0f, 1.0f, circleColorAlpha_});
-		model_->Draw(circleWorldTransform_, *camera_, &circleColor_);
-	}
+	circleColor_.SetColor(Vector4{1.0f, 1.0f, 1.0f, circleColorAlpha_});
+	model_->Draw(circleWorldTransform_, *camera_, &circleColor_);
 
 	for (WorldTransform& worldTransform : ellipseWorldTransforms_) {
-		model_->Draw(worldTransform, *camera_);
+		model_->Draw(worldTransform, *camera_, &circleColor_);
 	}
 }
 
-HitEffect* HitEffect::Create(Vector3 spawnPoint) {
+HitEffect* HitEffect::Create(KamataEngine::Vector3 spawnPoint, KamataEngine::Model* model, KamataEngine::Camera* camera) {
 	HitEffect* instance = new HitEffect();
 	assert(instance);
-	instance->Initialize(spawnPoint);
+	instance->Initialize(spawnPoint, model, camera);
 	return instance;
-};
+}

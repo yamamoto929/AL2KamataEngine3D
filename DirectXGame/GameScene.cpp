@@ -23,14 +23,16 @@ GameScene::~GameScene() {
 	delete modelSkydome_;
 	delete mapChipField_;
 	delete cameraController_;
-	for (Enemy* enemy : enemies_) {
+	for (BaseEnemy* enemy : enemies_) {
 		delete enemy;
 	}
 	delete deathParticles_;
 
-	for (HitEffect* hitEffect : hitEffects_) {
-		delete hitEffect;
+	for (BaseEffect* effect : effects_) {
+		delete effect;
 	}
+
+	delete modelGuardEffect_;
 }
 // 初期化
 void GameScene::Initialize() {
@@ -42,7 +44,11 @@ void GameScene::Initialize() {
 
 	modelBlock_ = Model::CreateFromOBJ("box", true);
 	modelEnemy_ = Model::CreateFromOBJ("enemy", true);
+	modelShieldEnemy_ = Model::CreateFromOBJ("shieldEnemy", true);
 	modelDeathParticles_ = Model::CreateFromOBJ("deathParticle", true);
+
+	modelHitEffect_ = Model::CreateFromOBJ("particle");
+	modelGuardEffect_ = Model::CreateFromOBJ("ring");
 
 	worldTransform_ = new WorldTransform();
 	worldTransform_->Initialize();
@@ -80,8 +86,16 @@ void GameScene::Initialize() {
 	for (size_t i = 0; i < kEnemyMax; ++i) {
 		Enemy* newEnemy = new Enemy();
 		uint32_t enemyPositionXIndex = static_cast<uint32_t>(i) + 20;
-		Vector3 enemyPosition = mapChipField_->GetMapChipPositionByIndex(enemyPositionXIndex, 18);
+		Vector3 enemyPosition = mapChipField_->GetMapChipPositionByIndex(enemyPositionXIndex, 16);
 		newEnemy->Initialize(modelEnemy_, camera_, enemyPosition,this);
+		enemies_.push_back(newEnemy);
+	}
+
+	for (size_t i = 0; i < kEnemyMax; ++i) {
+		ShieldEnemy* newEnemy = new ShieldEnemy();
+		uint32_t enemyPositionXIndex = static_cast<uint32_t>(i) + 20;
+		Vector3 enemyPosition = mapChipField_->GetMapChipPositionByIndex(enemyPositionXIndex, 18);
+		newEnemy->Initialize(modelShieldEnemy_, camera_, enemyPosition, this);
 		enemies_.push_back(newEnemy);
 	}
 
@@ -92,9 +106,7 @@ void GameScene::Initialize() {
 	cameraController_->SetMovableArea(movableArea);
 	cameraController_->Reset();
 
-	modelHitEffect_ = Model::CreateFromOBJ("particle");
-	HitEffect::SetModel(modelHitEffect_);
-	HitEffect::SetCamera(camera_);
+	
 
 	phase_ = Phase::kFadeIn;
 
@@ -117,18 +129,18 @@ void GameScene::Update() {
 		cameraController_->Update();
 
 		// ヒットエフェクト削除
-		hitEffects_.remove_if([](HitEffect* hitEffect) {
-			if (hitEffect->IsDead()) {
-				delete hitEffect;
+		effects_.remove_if([](BaseEffect* effect) {
+			if (effect->IsDead()) {
+				delete effect;
 				return true;
 			}
 			return false;
 		});
 
-
-		for (HitEffect* hitEffect : hitEffects_) {
-			hitEffect->Update();
+		for (BaseEffect* effect : effects_) {
+			effect->Update();
 		}
+
 		UpdateCamera();
 		UpdateBlocks();
 		CheckAllCollisions();
@@ -145,18 +157,17 @@ void GameScene::Update() {
 		if (phase_ == Phase::kDead) {
 			UpdateDeathParticles();
 		}
-		// ヒットエフェクト削除
-		hitEffects_.remove_if([](HitEffect* hitEffect) {
-			if (hitEffect->IsDead()) {
-				delete hitEffect;
-				return true; 
+
+		effects_.remove_if([](BaseEffect* effect) {
+			if (effect->IsDead()) {
+				delete effect;
+				return true;
 			}
 			return false;
 		});
 
-		for (HitEffect* hitEffect : hitEffects_) {
-			
-			hitEffect->Update();
+		for (BaseEffect* effect : effects_) {
+			effect->Update();
 		}
 
 		UpdateCamera();
@@ -180,7 +191,7 @@ void GameScene::Draw() {
 	player_->Draw();
 	skydome_->Draw();
 
-	for (Enemy* enemy : enemies_) {
+	for (BaseEnemy* enemy : enemies_) {
 		enemy->Draw();
 	}
 
@@ -193,8 +204,8 @@ void GameScene::Draw() {
 		}
 	}
 
-	for (HitEffect* hitEffect : hitEffects_) {
-		 hitEffect->Draw();
+	for (BaseEffect* effect : effects_) {
+		effect->Draw();
 	}
 
 	if (deathParticles_ != nullptr) {
@@ -240,7 +251,7 @@ void GameScene::CheckAllCollisions() {
 
 		aabb1 = player_->GetAABB();
 
-		for (Enemy* enemy : enemies_) {
+		for (BaseEnemy* enemy : enemies_) {
 			if (enemy->IsCollidionDisabled()) {
 				continue;
 			}
@@ -286,7 +297,7 @@ void GameScene::ChangePhase() {
 }
 
 void GameScene::UpdateEnemies() {
-	enemies_.remove_if([](Enemy* enemy) {
+	enemies_.remove_if([](BaseEnemy* enemy) {
 		if (enemy->IsDead()) {
 			delete enemy;
 			return true;
@@ -294,7 +305,7 @@ void GameScene::UpdateEnemies() {
 		return false;
 	});
 
-	for (Enemy* enemy : enemies_) {
+	for (BaseEnemy* enemy : enemies_) {
 		enemy->Update();
 	}
 };
@@ -331,7 +342,12 @@ void GameScene::UpdateDeathParticles() {
 	}
 }
 
-void GameScene::CreateHitEffect(KamataEngine::Vector3 spawnPoint) { 
-	HitEffect* newHitEffect = HitEffect::Create(spawnPoint); 
-	hitEffects_.push_back(newHitEffect);
-};
+void GameScene::CreateHitEffect(KamataEngine::Vector3 spawnPoint) {
+	HitEffect* newHitEffect = HitEffect::Create(spawnPoint, modelHitEffect_, camera_);
+	effects_.push_back(newHitEffect);
+}
+
+void GameScene::CreateGuardEffect(KamataEngine::Vector3 spawnPoint) {
+	GuardEffect* newGuardEffect = GuardEffect::Create(spawnPoint, modelGuardEffect_, camera_);
+	effects_.push_back(newGuardEffect);
+}
