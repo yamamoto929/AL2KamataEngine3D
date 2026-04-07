@@ -64,7 +64,8 @@ private:
 	KamataEngine::Model* modelShieldEnemy_ = nullptr;
 	KamataEngine::Model* modelGuardEffect_ = nullptr;
 
-
+	// リロード管理
+	bool reloadRequested_ = false;
 
 public:
 	~GameScene();
@@ -77,7 +78,7 @@ public:
 	// 描画処理
 	void Draw();
 
-	void GenerateBlocks();
+	void GenerateFieldObjects();
 
 	void CheckAllCollisions();
 
@@ -91,4 +92,6 @@ public:
 	void UpdateDeathParticles();
 	void CreateHitEffect(KamataEngine::Vector3 spawnPoint);
 	void CreateGuardEffect(KamataEngine::Vector3 spawnPoint);
+
+	bool IsReloadRequested() const { return reloadRequested_; }
 };
