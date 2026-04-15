@@ -1,4 +1,5 @@
 #include "GameScene.h"
+#include "StageManager.h"
 #include "WorldMatrixUpdate.h"
 #include "imgui.h"
 #include <vector>
@@ -35,7 +36,8 @@ GameScene::~GameScene() {
 	delete modelGuardEffect_;
 }
 // 初期化
-void GameScene::Initialize() {
+void GameScene::Initialize(StageManager* stageDataManager) {
+	stageManager_ = stageDataManager;
 	textureHandle_ = TextureManager::Load("uvChecker.png");
 	textureHandleBlock_ = TextureManager::Load("uvChecker.png");
 
@@ -64,7 +66,11 @@ void GameScene::Initialize() {
 	skydome_->Initialize(camera_, modelSkydome_);
 
 	mapChipField_ = new MapChipField();
-	mapChipField_->LoadMapChipCsv("Resources/blocks.csv");
+	stageManager_->SetCurrentStageIndex(1);
+	const StageData& stageData = stageManager_->GetCurrentStageData();
+
+	std::string stageFileName = "Resources/fields/" + stageData.name + ".csv";
+	mapChipField_->LoadMapChipCsv(stageFileName);
 
 	GenerateFieldObjects();
 
@@ -95,7 +101,7 @@ void GameScene::Initialize() {
 
 // 更新処理
 void GameScene::Update() {
-	#ifdef _DEBUG
+#ifdef _DEBUG
 	ImGui::Begin("HotReload");
 
 	if (ImGui::Button("Reload")) {
@@ -103,7 +109,7 @@ void GameScene::Update() {
 	}
 
 	ImGui::End();
-	#endif
+#endif
 	//  天球
 	skydome_->Update();
 
@@ -244,7 +250,7 @@ void GameScene::GenerateFieldObjects() {
 					enemies_.push_back(newEnemy);
 					break;
 				}
-				case 1:	{
+				case 1: {
 					ShieldEnemy* newEnemy = new ShieldEnemy();
 					Vector3 enemyPosition = mapChipField_->GetMapChipPositionByIndex(hor, vir);
 					newEnemy->Initialize(modelShieldEnemy_, camera_, enemyPosition, this);
@@ -254,118 +260,119 @@ void GameScene::GenerateFieldObjects() {
 				default:
 					break;
 				}
+				break;
 			}
 			default:
-					break;
-				}
-			}
+				break;
 			}
 		}
+	}
+}
 
-		void GameScene::CheckAllCollisions() {
+void GameScene::CheckAllCollisions() {
 #pragma region checkPlayer-EnemyCollision
-			{
-				AABB aabb1, aabb2;
+	{
+		AABB aabb1, aabb2;
 
-				aabb1 = player_->GetAABB();
+		aabb1 = player_->GetAABB();
 
-				for (BaseEnemy* enemy : enemies_) {
-					if (enemy->IsCollidionDisabled()) {
-						continue;
-					}
-
-					aabb2 = enemy->GetAABB();
-
-					if (CheckAABBCollision(aabb1, aabb2)) {
-						player_->OnCollision(enemy);
-						enemy->OnCollision(player_);
-					}
-				}
+		for (BaseEnemy* enemy : enemies_) {
+			if (enemy->IsCollidionDisabled()) {
+				continue;
 			}
+
+			aabb2 = enemy->GetAABB();
+
+			if (CheckAABBCollision(aabb1, aabb2)) {
+				player_->OnCollision(enemy);
+				enemy->OnCollision(player_);
+			}
+		}
+	}
 #pragma endregion
+}
+
+void GameScene::ChangePhase() {
+	switch (phase_) {
+	case Phase::kPlay:
+		if (player_->IsDead()) {
+			phase_ = Phase::kDead;
+			const Vector3& deathParticlesPosition = player_->GetWorldPosition();
+
+			deathParticles_->Initialize(modelDeathParticles_, camera_, deathParticlesPosition);
 		}
-
-		void GameScene::ChangePhase() {
-			switch (phase_) {
-			case Phase::kPlay:
-				if (player_->IsDead()) {
-					phase_ = Phase::kDead;
-					const Vector3& deathParticlesPosition = player_->GetWorldPosition();
-
-					deathParticles_->Initialize(modelDeathParticles_, camera_, deathParticlesPosition);
-				}
-				break;
-			case Phase::kDead:
-				if (deathParticles_ && deathParticles_->IsFinished()) {
-					phase_ = Phase::kFadeOut;
-					fade_->Start(Fade::Status::FadeOut, kFadingTime);
-				}
-				break;
-			case Phase::kFadeIn:
-			case Phase::kFadeOut:
-				if (fade_->isFinished()) {
-
-					if (phase_ == Phase::kFadeIn) {
-						phase_ = Phase::kPlay;
-					} else {
-						finished_ = true;
-					}
-				}
-			}
+		break;
+	case Phase::kDead:
+		if (deathParticles_ && deathParticles_->IsFinished()) {
+			phase_ = Phase::kFadeOut;
+			fade_->Start(Fade::Status::FadeOut, kFadingTime);
 		}
+		break;
+	case Phase::kFadeIn:
+	case Phase::kFadeOut:
+		if (fade_->isFinished()) {
 
-		void GameScene::UpdateEnemies() {
-			enemies_.remove_if([](BaseEnemy* enemy) {
-				if (enemy->IsDead()) {
-					delete enemy;
-					return true;
-				}
-				return false;
-			});
-
-			for (BaseEnemy* enemy : enemies_) {
-				enemy->Update();
-			}
-		};
-
-		void GameScene::UpdateCamera() {
-			if (isDebugCameraActive_) {
-				debugCamera_->Update();
-				camera_->matView = debugCamera_->GetCamera().matView;
-				camera_->matProjection = debugCamera_->GetCamera().matProjection;
-				camera_->TransferMatrix();
+			if (phase_ == Phase::kFadeIn) {
+				phase_ = Phase::kPlay;
 			} else {
-				camera_->UpdateMatrix();
-			}
-		};
-
-		void GameScene::UpdateBlocks() {
-			for (std::vector<WorldTransform*>& worldTransformBlockLine : worldTransformBlocks_) {
-				for (WorldTransform* worldTransformBlock : worldTransformBlockLine) {
-					if (!worldTransformBlock)
-						continue;
-
-					WorldMatrixUpdate(*worldTransformBlock);
-				}
-			}
-		};
-
-		void GameScene::UpdateDeathParticles() {
-			/*if (deathParticles_ && deathParticles_->IsFinished()) {
-			    finished_ = true;
-			}*/
-
-			if (deathParticles_ != nullptr) {
-				deathParticles_->Update();
+				finished_ = true;
 			}
 		}
+	}
+}
 
-		void GameScene::CreateHitEffect(KamataEngine::Vector3 spawnPoint) {
-			HitEffect* newHitEffect = HitEffect::Create(spawnPoint, modelHitEffect_, camera_);
-			effects_.push_back(newHitEffect);
+void GameScene::UpdateEnemies() {
+	enemies_.remove_if([](BaseEnemy* enemy) {
+		if (enemy->IsDead()) {
+			delete enemy;
+			return true;
 		}
+		return false;
+	});
 
-		void GameScene::CreateGuardEffect(KamataEngine::Vector3 spawnPoint) {
-			GuardEffect* newGuardEffect = GuardEffect::Create(spawnPoint, modelGuardEffect_, camera_);
-			effects_.push_back(newGuardEffect);
+	for (BaseEnemy* enemy : enemies_) {
+		enemy->Update();
+	}
+};
+
+void GameScene::UpdateCamera() {
+	if (isDebugCameraActive_) {
+		debugCamera_->Update();
+		camera_->matView = debugCamera_->GetCamera().matView;
+		camera_->matProjection = debugCamera_->GetCamera().matProjection;
+		camera_->TransferMatrix();
+	} else {
+		camera_->UpdateMatrix();
+	}
+};
+
+void GameScene::UpdateBlocks() {
+	for (std::vector<WorldTransform*>& worldTransformBlockLine : worldTransformBlocks_) {
+		for (WorldTransform* worldTransformBlock : worldTransformBlockLine) {
+			if (!worldTransformBlock)
+				continue;
+
+			WorldMatrixUpdate(*worldTransformBlock);
 		}
+	}
+};
+
+void GameScene::UpdateDeathParticles() {
+	/*if (deathParticles_ && deathParticles_->IsFinished()) {
+	    finished_ = true;
+	}*/
+
+	if (deathParticles_ != nullptr) {
+		deathParticles_->Update();
+	}
+}
+
+void GameScene::CreateHitEffect(KamataEngine::Vector3 spawnPoint) {
+	HitEffect* newHitEffect = HitEffect::Create(spawnPoint, modelHitEffect_, camera_);
+	effects_.push_back(newHitEffect);
+}
+
+void GameScene::CreateGuardEffect(KamataEngine::Vector3 spawnPoint) {
+	GuardEffect* newGuardEffect = GuardEffect::Create(spawnPoint, modelGuardEffect_, camera_);
+	effects_.push_back(newGuardEffect);
+}

@@ -1,6 +1,7 @@
 #include "GameScene.h"
 #include "KamataEngine.h"
 #include "TitleScene.h"
+#include "StageManager.h"
 #include <Windows.h>
 
 using namespace KamataEngine;
@@ -15,12 +16,18 @@ Scene scene = Scene::kUnknown;
 void ChangeScene();
 void UpdateScene();
 void DrawScene();
+StageManager* stageManager = nullptr;
+
 
 // Windowsアプリでのエントリーポイント(main関数)
 int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 	// エンジンの初期化
 	KamataEngine::Initialize();
+
+	stageManager = new StageManager;
+	stageManager->LoadStageFiles();
+
 	scene = Scene::kTitle;
 	titleScene = new TitleScene;
 
@@ -30,7 +37,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	gameScene = new GameScene;
 
 	// ゲームシーンの初期化
-	gameScene->Initialize();
+	gameScene->Initialize(stageManager);
 
 	// DirectXCommonインスタンスの取得
 	DirectXCommon* dxCommon = DirectXCommon::GetInstance();
@@ -64,10 +71,11 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 	delete titleScene;
 	delete gameScene;
-
+	delete stageManager;
 	// nullptrの代入
 	gameScene = nullptr;
 	titleScene = nullptr;
+	stageManager = nullptr;
 
 	return 0;
 }
@@ -81,7 +89,7 @@ void ChangeScene() {
 			titleScene = nullptr;
 
 			gameScene = new GameScene;
-			gameScene->Initialize();
+			gameScene->Initialize(stageManager);
 		}
 		break;
 	case Scene::kGame:
@@ -96,7 +104,7 @@ void ChangeScene() {
 			delete gameScene;
 			gameScene = nullptr;
 			gameScene = new GameScene;
-			gameScene->Initialize();
+			gameScene->Initialize(stageManager);
 		}
 		break;
 	}

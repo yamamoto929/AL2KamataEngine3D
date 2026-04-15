@@ -14,6 +14,7 @@
 #include "Skydome.h"
 
 // ゲームシーン
+class StageManager;
 class GameScene final {
 private:
 	uint32_t textureHandle_ = 0;
@@ -67,10 +68,12 @@ private:
 	// リロード管理
 	bool reloadRequested_ = false;
 
+	StageManager* stageManager_ = nullptr;
+
 public:
 	~GameScene();
 	// 初期化
-	void Initialize();
+	void Initialize(StageManager* stageManager);
 
 	// 更新処理
 	void Update();
